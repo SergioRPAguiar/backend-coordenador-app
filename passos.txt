@@ -1,0 +1,462 @@
+ele ta dando esse erro Android Bundled 132ms D:\Facul\DesenMoveis\agenda-cotad\node_modules\expo-router\entry.js (1 module)
+ ERROR  Erro ao buscar próxima reunião: [AxiosError: Request failed with status code 500] vou te mandar o AuthContext.tsx do front import { createContext, useContext, useState, useEffect } from "react";
+import axios from "axios";
+import * as SecureStore from "expo-secure-store";
+
+interface User {
+  id: string;
+  name: string;
+  email: string;
+  contato: string;  // Adicionado o campo contato
+  professor: boolean;
+}
+
+interface AuthState {
+  token: string | null;
+  authenticated: boolean | null;
+  user: User | null;
+}
+
+interface AuthProps {
+  authState: AuthState;
+  user: User | null;
+  onRegister: (name: string, email: string, contact: string, password: string) => Promise<any>;
+  onLogin: (email: string, password: string) => Promise<any>;
+  onLogout: () => Promise<any>;
+}
+
+const TOKEN_KEY = "my-jwt";
+export const API_URL = "http://192.168.101.9:3000";  // URL da API
+const AuthContext = createContext<AuthProps | undefined>(undefined);
+
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error("useAuth deve ser usado dentro de um AuthProvider");
+  }
+  return context;
+};
+
+export const AuthProvider = ({ children }: any) => {
+  const [authState, setAuthState] = useState<AuthState>({
+    token: null,
+    authenticated: null,
+    user: null,
+  });
+
+  useEffect(() => {
+    const loadToken = async () => {
+      try {
+        const token = await SecureStore.getItemAsync(TOKEN_KEY);  // Carregando o token do SecureStore
+        if (token) {
+          axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+          const userInfo = await fetchUserInfo(token);  // Buscando informações do usuário
+          setAuthState({
+            token,
+            authenticated: true,
+            user: userInfo,
+          });
+        } else {
+          setAuthState({ token: null, authenticated: false, user: null });
+        }
+      } catch (error) {
+        console.error("Erro ao carregar o token:", error);
+        setAuthState({ token: null, authenticated: false, user: null });
+      }
+    };
+  
+    loadToken();
+  }, []);
+
+  const fetchUserInfo = async (token: string): Promise<User | null> => {
+    try {
+      const response = await axios.get(`${API_URL}/auth/me`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      return response.data;  // Retornando os dados do usuário
+    } catch (e) {
+      console.error("Erro ao buscar informações do usuário:", e);
+      return null;
+    }
+  };
+
+  const register = async (name: string, email: string, contato: string, password: string) => {
+    try {
+      const result = await axios.post(`${API_URL}/auth/register`, {
+        name, email, contato, password
+      });
+      return result;
+    } catch (e) {
+      const errorMsg = (e as any).response?.data?.message || "Erro ao registrar.";
+      return { error: true, msg: `Falha no registro: ${errorMsg}` };
+    }
+  };
+
+  const login = async (email: string, password: string) => {
+    try {
+      const result = await axios.post(`${API_URL}/auth/login`, { email, password });
+      const token = result.data.access_token;  // Obtendo o token JWT
+      if (!token) throw new Error("Token JWT não retornado.");
+      await SecureStore.setItemAsync(TOKEN_KEY, token);  // Salvando o token
+      const userInfo = await fetchUserInfo(token);
+      setAuthState({ token, authenticated: true, user: userInfo });
+      return result;
+    } catch (e) {
+      const errorMsg = (e as any).response?.data?.message || "Erro ao fazer login.";
+      return { error: true, msg: `Falha no login: ${errorMsg}` };
+    }
+  };
+
+  const logout = async () => {
+    try {
+      await SecureStore.deleteItemAsync(TOKEN_KEY);
+      delete axios.defaults.headers.common["Authorization"];
+      setAuthState({ token: null, authenticated: false, user: null });
+    } catch (e) {
+      console.error("Erro ao sair:", e);
+    }
+  };
+
+  return (
+    <AuthContext.Provider
+      value={{
+        authState,
+        user: authState.user,
+        onRegister: register,
+        onLogin: login,
+        onLogout: logout,
+      }}
+    >
+      {children}
+    </AuthContext.Provider>
+  );
+};
+e os arquivos do back pra vc entender e ver o que esta acontecendo src\meeting\dto\create-meeting.dto.ts: export class CreateMeetingDto {
+    date: string;
+    timeSlot: string;
+    reason: string;
+    userId: string; 
+  }
+  src\meeting\dto\update-meeting.dto.ts: import { PartialType } from '@nestjs/mapped-types';
+import { CreateMeetingDto } from './create-meeting.dto';
+
+export class UpdateMeetingDto extends PartialType(CreateMeetingDto) {}
+D:\Facul\DesenMoveis\back-agenda-cotad\src\meeting\schemas\meeting.schema.ts:import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { Document } from 'mongoose';
+
+export type MeetingDocument = Meeting & Document;
+
+@Schema()
+export class Meeting {
+  @Prop({ required: true })
+  date: string;
+
+  @Prop({ required: true })
+  timeSlot: string;
+
+  @Prop({ required: true })
+  reason: string;
+
+  @Prop({ required: true })
+  userId: string;  // Relaciona a reunião com um usuário
+}
+
+export const MeetingSchema = SchemaFactory.createForClass(Meeting);
+D:\Facul\DesenMoveis\back-agenda-cotad\src\meeting\meeting.controller.ts: import { Controller, Get, Post, Body, Param, NotFoundException, Patch, Delete } from '@nestjs/common';
+import { MeetingService } from './meeting.service';
+import { Meeting } from './schemas/meeting.schema';
+import { CreateMeetingDto } from './dto/create-meeting.dto';
+import { UpdateMeetingDto } from './dto/update-meeting.dto';
+
+@Controller('meeting')
+export class MeetingController {
+  constructor(private readonly meetingService: MeetingService) {}
+
+  @Post()
+  async create(@Body() createMeetingDto: CreateMeetingDto): Promise<Meeting> {
+    return this.meetingService.create(createMeetingDto);
+  }
+
+  @Get()
+  async findAll(): Promise<Meeting[]> {
+    return this.meetingService.findAll();
+  }
+
+  @Get(':id')
+  async findOne(@Param('id') id: string): Promise<Meeting> {
+    const meeting = await this.meetingService.findOne(id);
+    if (!meeting) {
+      throw new NotFoundException(`Meeting with ID ${id} not found`);
+    }
+    return meeting;
+  }
+
+  @Patch(':id')
+  async update(
+    @Param('id') id: string,
+    @Body() updateMeetingDto: UpdateMeetingDto,
+  ): Promise<Meeting> {
+    const updatedMeeting = await this.meetingService.update(id, updateMeetingDto);
+    if (!updatedMeeting) {
+      throw new NotFoundException(`Meeting with ID ${id} not found`);
+    }
+    return updatedMeeting;
+  }
+
+  @Delete(':id')
+  async remove(@Param('id') id: string): Promise<{ message: string }> {
+    const result = await this.meetingService.remove(id);
+    if (!result) {
+      throw new NotFoundException(`Meeting with ID ${id} not found`);
+    }
+    return { message: `Meeting with ID ${id} deleted successfully` };
+  }
+}
+src\meeting\meeting.module.ts: import { Module } from '@nestjs/common';
+import { MongooseModule } from '@nestjs/mongoose';
+import { Meeting, MeetingSchema } from './schemas/meeting.schema';
+import { MeetingService } from './meeting.service';
+import { MeetingController } from './meeting.controller';
+
+@Module({
+  imports: [MongooseModule.forFeature([{ name: Meeting.name, schema: MeetingSchema }])],
+  controllers: [MeetingController],
+  providers: [MeetingService],
+  exports: [MeetingService],
+})
+export class MeetingModule {}
+src\meeting\meeting.service.ts: import { Injectable, NotFoundException } from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
+import { Meeting, MeetingDocument } from './schemas/meeting.schema';
+import { CreateMeetingDto } from './dto/create-meeting.dto';
+import { UpdateMeetingDto } from './dto/update-meeting.dto';
+import { ScheduleService } from '../schedule/schedule.service';  // Importe o ScheduleService
+
+@Injectable()
+export class MeetingService {
+  constructor(
+    @InjectModel(Meeting.name) private meetingModel: Model<MeetingDocument>,
+    private readonly scheduleService: ScheduleService
+  ) {}
+
+  async create(createMeetingDto: CreateMeetingDto): Promise<Meeting> {
+    const createdMeeting = new this.meetingModel(createMeetingDto);
+    await createdMeeting.save();
+
+    // Atualizar a disponibilidade no Schedule
+    await this.scheduleService.markAvailability(
+      createMeetingDto.date,
+      createMeetingDto.timeSlot,
+      false // Marcar como indisponível
+    );
+
+    return createdMeeting;
+  
+  }
+
+  async findAll(): Promise<Meeting[]> {
+    return this.meetingModel.find().exec();
+  }
+
+  async findOne(id: string): Promise<Meeting> {
+    const meeting = await this.meetingModel.findById(id).exec();
+    if (!meeting) {
+      throw new NotFoundException(`Meeting with ID ${id} not found`);
+    }
+    return meeting;
+  }
+
+  async update(id: string, updateMeetingDto: UpdateMeetingDto): Promise<Meeting> {
+    const updatedMeeting = await this.meetingModel
+      .findByIdAndUpdate(id, updateMeetingDto, { new: true })
+      .exec();
+    if (!updatedMeeting) {
+      throw new NotFoundException(`Meeting with ID ${id} not found`);
+    }
+    return updatedMeeting;
+  }
+
+  async remove(id: string): Promise<{ message: string }> {
+    const result = await this.meetingModel.findByIdAndDelete(id).exec();
+    if (!result) {
+      throw new NotFoundException(`Meeting with ID ${id} not found`);
+    }
+    return { message: `Meeting with ID ${id} deleted successfully` };
+  }
+}
+src\schedule\dto\create-schedule.dto.ts: import { IsString, IsBoolean, IsOptional } from 'class-validator';
+
+export class CreateScheduleDto {
+  @IsString()
+  date: string;
+
+  @IsString()
+  timeSlot: string;
+
+  @IsBoolean()
+  @IsOptional()  // Caso este campo possa ser opcional
+  available?: boolean;
+}
+src\schedule\dto\update-schedule.dto.ts: import { PartialType } from '@nestjs/mapped-types';
+import { CreateScheduleDto } from './create-schedule.dto';
+
+export class UpdateScheduleDto extends PartialType(CreateScheduleDto) {} src\schedule\schemas\schedule.schema.ts: import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { Document } from 'mongoose';
+
+export type ScheduleDocument = Schedule & Document;
+
+@Schema()
+export class Schedule {
+  @Prop({ required: true })
+  date: string;
+
+  @Prop({ required: true })
+  timeSlot: string;
+
+  @Prop({ default: false })
+  available: boolean;
+}
+
+export const ScheduleSchema = SchemaFactory.createForClass(Schedule);
+src\schedule\schedule.controller.ts: import { Controller, Get, Post, Body, Param, NotFoundException, Patch, Delete, UseGuards } from '@nestjs/common';
+import { ScheduleService } from './schedule.service';
+import { Schedule } from './schemas/schedule.schema';
+import { CreateScheduleDto } from './dto/create-schedule.dto';
+import { UpdateScheduleDto } from './dto/update-schedule.dto';
+import { AuthGuard } from '@nestjs/passport';
+
+@Controller('schedule')
+export class ScheduleController {
+  constructor(private readonly scheduleService: ScheduleService) {}
+
+  @Get('available/:date')
+  async findAvailable(@Param('date') date: string): Promise<Schedule[]> {
+    return this.scheduleService.findAvailableByDate(date); // Chama o método correto no service
+  }
+
+  @UseGuards(AuthGuard('jwt'))
+  @Post()
+  async create(@Body() createScheduleDto: CreateScheduleDto): Promise<Schedule> {
+    const { date, timeSlot, available } = createScheduleDto;
+    return this.scheduleService.markAvailability(date, timeSlot, available);
+}
+
+
+  @Get()
+  async findAll(): Promise<Schedule[]> {
+    return this.scheduleService.findAll();
+  }
+
+  @Get(':id')
+  async findOne(@Param('id') id: string): Promise<Schedule> {
+    const schedule = await this.scheduleService.findOne(id);
+    if (!schedule) {
+      throw new NotFoundException(`Schedule with ID ${id} not found`);
+    }
+    return schedule;
+  }
+
+  @UseGuards(AuthGuard('jwt'))
+  @Patch(':id')
+  async update(
+    @Param('id') id: string,
+    @Body() updateScheduleDto: UpdateScheduleDto,
+  ): Promise<Schedule> {
+    const updatedSchedule = await this.scheduleService.update(id, updateScheduleDto);
+    if (!updatedSchedule) {
+      throw new NotFoundException(`Schedule with ID ${id} not found`);
+    }
+    return updatedSchedule;
+  }
+
+  @UseGuards(AuthGuard('jwt'))
+  @Delete(':id')
+  async remove(@Param('id') id: string): Promise<{ message: string }> {
+    const result = await this.scheduleService.remove(id);
+    if (!result) {
+      throw new NotFoundException(`Schedule with ID ${id} not found`);
+    }
+    return { message: `Schedule with ID ${id} deleted successfully` };
+  }
+}
+src\schedule\schedule.module.ts: import { Module } from '@nestjs/common';
+import { MongooseModule } from '@nestjs/mongoose';
+import { Schedule, ScheduleSchema } from './schemas/schedule.schema';
+import { ScheduleService } from './schedule.service';
+import { ScheduleController } from './schedule.controller';
+
+@Module({
+  imports: [MongooseModule.forFeature([{ name: Schedule.name, schema: ScheduleSchema }])],
+  controllers: [ScheduleController],
+  providers: [ScheduleService],
+  exports: [ScheduleService],  // Já está exportando o ScheduleService
+})
+export class ScheduleModule {}
+src\schedule\schedule.service.ts: import { Injectable } from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
+import { Schedule, ScheduleDocument } from './schemas/schedule.schema';
+import { CreateScheduleDto } from './dto/create-schedule.dto';
+import { UpdateScheduleDto } from './dto/update-schedule.dto';
+
+@Injectable()
+export class ScheduleService {
+  constructor(
+    @InjectModel(Schedule.name) private scheduleModel: Model<ScheduleDocument>
+  ) {}
+
+  async findAvailableByDate(date: string): Promise<Schedule[]> {
+    return this.scheduleModel.find({ date, available: true }).exec();
+  }
+
+  async create(createScheduleDto: CreateScheduleDto): Promise<Schedule> {
+    const createdSchedule = new this.scheduleModel(createScheduleDto);
+    return createdSchedule.save();
+  }
+
+  async findAll(): Promise<Schedule[]> {
+    return this.scheduleModel.find().exec();
+  }
+
+  async findOne(id: string): Promise<Schedule | null> {
+    return this.scheduleModel.findById(id).exec();
+  }
+
+  async update(id: string, updateScheduleDto: UpdateScheduleDto): Promise<Schedule | null> {
+    return this.scheduleModel.findByIdAndUpdate(id, updateScheduleDto, { new: true }).exec();
+  }
+
+  async remove(id: string): Promise<boolean> {
+    const result = await this.scheduleModel.findByIdAndDelete(id).exec();
+    return result !== null;
+  }
+
+  async markAvailability(date: string, timeSlot: string, available: boolean): Promise<Schedule> {
+    const schedule = await this.scheduleModel.findOneAndUpdate(
+      { date, timeSlot },
+      { available },
+      { new: true, upsert: true }
+    );
+    return schedule;
+  }
+  
+
+  async getAvailableSlots(date: string): Promise<Schedule[]> {
+    return this.scheduleModel.find({ date, available: true }).exec();
+  }
+}src\main.ts: import { ValidationPipe } from '@nestjs/common';
+import { NestFactory } from '@nestjs/core';
+import { AppModule } from './app.module';
+
+async function bootstrap() {
+  const app = await NestFactory.create(AppModule);
+
+  app.useGlobalPipes(new ValidationPipe({
+    whitelist: true, // Remove propriedades não definidas no DTO
+    forbidNonWhitelisted: true, // Rejeita propriedades que não estão no DTO
+  }));
+
+  await app.listen(3000);
+}
+bootstrap();
