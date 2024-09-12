@@ -6,10 +6,12 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   app.useGlobalPipes(new ValidationPipe({
-    whitelist: true, // Remove propriedades não definidas no DTO
-    forbidNonWhitelisted: true, // Rejeita propriedades que não estão no DTO
+    whitelist: true,
+    forbidNonWhitelisted: true,
   }));
 
-  await app.listen(3000);
+  await app.listen(3000, '0.0.0.0');
+  console.log(`Application is running on: ${await app.getUrl()}`); // Adicione esta linha para verificar a URL correta
 }
 bootstrap();
+

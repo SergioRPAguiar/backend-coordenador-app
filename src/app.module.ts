@@ -15,7 +15,7 @@ import { ScheduleModule } from './schedule/schedule.module'; // Importe o Schedu
     AuthModule,
     UserModule,
 
-    MongooseModule.forRoot('mongodb://localhost:27017/back_agenda_cotad'),
+    MongooseModule.forRoot(process.env.MONGO_URI || 'mongodb://localhost:27017/nestdb'),
 
     MongooseModule.forFeature([{ name: Meeting.name, schema: MeetingSchema }]),
     MongooseModule.forFeature([{ name: User.name, schema: UserSchema }]),
