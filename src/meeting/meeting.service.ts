@@ -6,6 +6,10 @@ import { CreateMeetingDto } from './dto/create-meeting.dto';
 import { UpdateMeetingDto } from './dto/update-meeting.dto';
 import { ScheduleService } from '../schedule/schedule.service';  // Importe o ScheduleService
 
+interface MeetingWithDateObject extends Meeting {
+  dateObject?: Date;
+}
+
 @Injectable()
 export class MeetingService {
   constructor(
@@ -32,41 +36,97 @@ export class MeetingService {
     return createdMeeting;
   }
 
-  
-
   async findNextMeetingByUserId(id: string): Promise<Meeting | null> {
-    console.log('Buscando reunião para o userId:', id);
+    const now = new Date();
+    const today = now.toISOString().split('T')[0];  
+    const currentTime = now.toTimeString().slice(0, 5);
   
     const meeting = await this.meetingModel
-      .findOne({ userId: id, date: { $gte: new Date() } })  // Ajuste aqui para comparar com a data atual
-      .sort({ date: 1 })
+      .findOne({
+        userId: id,
+        canceled: false,  // Ignorar reuniões canceladas
+        $or: [
+          { date: { $gt: today } },
+          { date: today, timeSlot: { $gt: currentTime } },
+        ],
+      })
+      .sort({ date: 1, timeSlot: 1 })
       .exec();
   
     if (!meeting) {
-      console.log('Nenhuma reunião encontrada.');
-      return null;
+      throw new NotFoundException(`No upcoming meetings found for user with ID ${id}`);
     }
   
-    console.log('Reunião encontrada:', meeting);
     return meeting;
   }
   
+  async findAllMeetingsForStudent(userId: string): Promise<Meeting[]> {
+    return this.meetingModel
+      .find({
+        userId: userId,     // Filtra pelas reuniões do aluno
+        canceled: false,    // Ignora reuniões canceladas
+      })
+      .sort({ date: 1, timeSlot: 1 }) // Ordena por data e horário
+      .exec();
+  }
+
+  async findNextMeetingForProfessor(): Promise<MeetingWithDateObject | null> {
+    const now = new Date();
+    const today = now.toISOString().split('T')[0];
+    const currentTime = now.toTimeString().slice(0, 5);
+  
+    // Adicionando a condição para verificar se a reunião foi cancelada
+    const meeting = await this.meetingModel
+      .findOne({
+        canceled: false,  // Ignorar reuniões canceladas
+        $or: [{ date: { $gt: today } }, { date: today, timeSlot: { $gt: currentTime } }],
+      })
+      .sort({ date: 1, timeSlot: 1 })
+      .exec();
+  
+    if (!meeting) {
+      throw new NotFoundException('No upcoming meetings found');
+    }
+  
+    const meetingObject = meeting.toObject();
+    const dateObject = new Date(`${meetingObject.date}T${meetingObject.timeSlot.split(' - ')[0]}:00Z`);
+  
+    return { ...meetingObject, dateObject };
+  }
+
+  async findAllFutureMeetingsForProfessor(): Promise<Meeting[]> {
+    const now = new Date();
+    const today = now.toISOString().split('T')[0];
+    const currentTime = now.toTimeString().slice(0, 5);
+
+    // Buscar todas as reuniões futuras do professor
+    return this.meetingModel
+      .find({
+        $or: [
+          { date: { $gt: today } },
+          { date: today, timeSlot: { $gt: currentTime } }
+        ],
+      })
+      .sort({ date: 1, timeSlot: 1 })
+      .exec();
+  }
+
   async cancel(id: string, reason: string): Promise<Meeting | null> {
     const meeting = await this.meetingModel.findByIdAndUpdate(
       id,
       { canceled: true, cancelReason: reason },
       { new: true }
     ).exec();
-
+  
     if (!meeting) {
       throw new NotFoundException(`Meeting with ID ${id} not found`);
     }
-
+  
     return meeting;
   }
+  
 
   async notifyUsers(meeting: Meeting): Promise<void> {
-    // Implementar lógica de notificação (email, push notification, etc.)
     console.log(`Notificando usuários sobre o cancelamento da reunião ${meeting.userId}`);
   }
 
@@ -81,7 +141,7 @@ export class MeetingService {
   
     const meeting = await this.meetingModel.findById(id).exec();
     if (!meeting) {
-      return null;  // Retorne null se a reunião não existir
+      return null;
     }
     return meeting;
   }
@@ -95,7 +155,6 @@ export class MeetingService {
     }
     return updatedMeeting;
   }
-  
 
   async remove(id: string): Promise<{ message: string }> {
     const result = await this.meetingModel.findByIdAndDelete(id).exec();

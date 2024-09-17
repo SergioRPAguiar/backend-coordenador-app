@@ -10,11 +10,10 @@ export class MeetingController {
 
   @Post()
   async create(@Body() createMeetingDto: CreateMeetingDto): Promise<Meeting> {
-  console.log('Dados recebidos para criar a reunião:', createMeetingDto);
-  return this.meetingService.create(createMeetingDto);
-}
+    console.log('Dados recebidos para criar a reunião:', createMeetingDto);
+    return this.meetingService.create(createMeetingDto);
+  }
 
-  // meeting.controller.ts
   @Get('next')
   async findNextMeeting(@Query('userId') userId: string): Promise<Meeting | null> {
     const meeting = await this.meetingService.findNextMeetingByUserId(userId);
@@ -24,10 +23,25 @@ export class MeetingController {
     return meeting;
   }
 
+  @Get('nextForProfessor')
+  async findNextMeetingForProfessor(): Promise<Meeting | null> {
+    return this.meetingService.findNextMeetingForProfessor();
+  }
 
   @Get()
   async findAll(): Promise<Meeting[]> {
     return this.meetingService.findAll();
+  }
+
+  // Novo endpoint para todas as reuniões futuras do professor
+  @Get('allFutureForProfessor')
+  async findAllFutureMeetingsForProfessor(): Promise<Meeting[]> {
+    return this.meetingService.findAllFutureMeetingsForProfessor();
+  }
+
+  @Get('allForStudent')
+  async findAllMeetingsForStudent(@Query('userId') userId: string): Promise<Meeting[]> {
+    return this.meetingService.findAllMeetingsForStudent(userId);
   }
 
   @Patch(':id/cancel')
@@ -50,10 +64,7 @@ async cancelMeeting(@Param('id') id: string, @Body() cancelDto: { reason: string
   }
 
   @Patch(':id')
-  async update(
-    @Param('id') id: string,
-    @Body() updateMeetingDto: UpdateMeetingDto,
-  ): Promise<Meeting> {
+  async update(@Param('id') id: string, @Body() updateMeetingDto: UpdateMeetingDto): Promise<Meeting> {
     const updatedMeeting = await this.meetingService.update(id, updateMeetingDto);
     if (!updatedMeeting) {
       throw new NotFoundException(`Meeting with ID ${id} not found`);

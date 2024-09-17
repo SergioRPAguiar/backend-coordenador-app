@@ -15,7 +15,14 @@ export class Meeting {
   reason: string;
 
   @Prop({ required: true })
-  userId: string;  // Relaciona a reunião com um usuário
+  userId: string;  
+  
+  @Prop({ default: false })
+  canceled: boolean;
+  
+  @Prop()
+  cancelReason: string;
+  
 }
 
 export const MeetingSchema = SchemaFactory.createForClass(Meeting);
