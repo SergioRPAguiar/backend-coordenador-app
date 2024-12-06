@@ -12,7 +12,6 @@ export class UserService {
   ) {}
 
   async create(createUserDto: CreateUserDto): Promise<User> {
-    // O campo professor é opcional e será respeitado conforme passado no DTO
     const user = new this.userModel(createUserDto);
     return user.save();
   }
@@ -22,7 +21,7 @@ export class UserService {
   }
 
   async findOne(id: string): Promise<User> {
-    const user = await this.userModel.findById(id).exec(); // `id` deve ser um ObjectId válido
+    const user = await this.userModel.findById(id).exec();
     if (!user) {
       throw new NotFoundException(`User with ID ${id} not found`);
     }
@@ -34,7 +33,7 @@ export class UserService {
     if (!user) {
       throw new NotFoundException(`User with email ${email} not found`);
     }
-    return user; // Agora user é do tipo UserDocument, então você pode usar toObject()
+    return user;
   }
 
   async update(id: string, updateUserDto: UpdateUserDto): Promise<User> {

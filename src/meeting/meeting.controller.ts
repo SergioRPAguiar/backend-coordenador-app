@@ -33,7 +33,6 @@ export class MeetingController {
     return this.meetingService.findAll();
   }
 
-  // Novo endpoint para todas as reuniões futuras do professor
   @Get('allFutureForProfessor')
   async findAllFutureMeetingsForProfessor(): Promise<Meeting[]> {
     return this.meetingService.findAllFutureMeetingsForProfessor();

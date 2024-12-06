@@ -11,7 +11,7 @@ export class ScheduleController {
 
   @Get('available/:date')
   async findAvailable(@Param('date') date: string): Promise<Schedule[]> {
-    return this.scheduleService.findAvailableByDate(date); // Chama o método correto no service
+    return this.scheduleService.findAvailableByDate(date);
   }
 
   @UseGuards(AuthGuard('jwt'))

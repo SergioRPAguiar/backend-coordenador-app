@@ -8,6 +8,6 @@ export class CreateScheduleDto {
   timeSlot: string;
 
   @IsBoolean()
-  @IsOptional()  // Caso este campo possa ser opcional
+  @IsOptional()
   available?: boolean;
 }

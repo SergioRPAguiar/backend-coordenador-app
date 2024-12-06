@@ -10,7 +10,6 @@ import { User, UserSchema } from './user/schemas/user.schema';
 import { AuthModule } from './auth/auth.module';
 import { UserModule } from './user/user.module';
 import { ScheduleModule } from './schedule/schedule.module';
-import { GoogleCalendarModule } from './google/google-calendar.module';
 import { EmailModule } from './email/email.module'; // Adicione aqui o EmailModule
 
 @Module({
@@ -18,7 +17,6 @@ import { EmailModule } from './email/email.module'; // Adicione aqui o EmailModu
     ConfigModule.forRoot({ isGlobal: true }),
     AuthModule,
     UserModule,
-    GoogleCalendarModule,
     MongooseModule.forRoot('mongodb://localhost:27017/back_agenda_cotad'),
     MongooseModule.forFeature([{ name: Meeting.name, schema: MeetingSchema }]),
     MongooseModule.forFeature([{ name: User.name, schema: UserSchema }]),

@@ -3,12 +3,12 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { MeetingController } from './meeting.controller';
 import { MeetingService } from './meeting.service';
 import { Meeting, MeetingSchema } from './schemas/meeting.schema';
-import { EmailModule } from '../email/email.module'; // Importar módulo de e-mail
+import { EmailModule } from '../email/email.module';
 
 @Module({
   imports: [
     MongooseModule.forFeature([{ name: Meeting.name, schema: MeetingSchema }]),
-    EmailModule, // Registrar módulo de e-mail
+    EmailModule,
   ],
   controllers: [MeetingController],
   providers: [MeetingService],

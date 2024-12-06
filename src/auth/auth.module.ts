@@ -11,7 +11,7 @@ import { AuthController } from './auth.controller';
     UserModule,
     PassportModule,
     JwtModule.register({
-      secret: 'seuSegredoJWT', // Chave secreta usada para assinar o JWT
+      secret: 'seuSegredoJWT',
       signOptions: { expiresIn: '60m' },
     }),
   ],

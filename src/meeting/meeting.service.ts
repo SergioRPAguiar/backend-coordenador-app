@@ -4,7 +4,7 @@ import { Model, Types } from 'mongoose';
 import { Meeting, MeetingDocument } from './schemas/meeting.schema';
 import { CreateMeetingDto } from './dto/create-meeting.dto';
 import { UpdateMeetingDto } from './dto/update-meeting.dto';
-import { ScheduleService } from '../schedule/schedule.service';  // Importe o ScheduleService
+import { ScheduleService } from '../schedule/schedule.service';
 import { EmailService } from '../email/email.service';
 import { UserService } from '../user/user.service';
 import * as dayjs from 'dayjs'
@@ -48,7 +48,7 @@ export class MeetingService {
     const meeting = await this.meetingModel
       .findOne({
         userId: id,
-        canceled: false,  // Ignorar reuniões canceladas
+        canceled: false,
         $or: [
           { date: { $gt: today } },
           { date: today, timeSlot: { $gt: currentTime } },
@@ -67,10 +67,10 @@ export class MeetingService {
   async findAllMeetingsForStudent(userId: string): Promise<Meeting[]> {
     return this.meetingModel
       .find({
-        userId: userId,     // Filtra pelas reuniões do aluno
-        canceled: false,    // Ignora reuniões canceladas
+        userId: userId,
+        canceled: false,
       })
-      .sort({ date: 1, timeSlot: 1 }) // Ordena por data e horário
+      .sort({ date: 1, timeSlot: 1 })
       .exec();
   }
 
@@ -78,11 +78,10 @@ export class MeetingService {
     const now = new Date();
     const today = now.toISOString().split('T')[0];
     const currentTime = now.toTimeString().slice(0, 5);
-  
-    // Adicionando a condição para verificar se a reunião foi cancelada
+
     const meeting = await this.meetingModel
       .findOne({
-        canceled: false,  // Ignorar reuniões canceladas
+        canceled: false,
         $or: [{ date: { $gt: today } }, { date: today, timeSlot: { $gt: currentTime } }],
       })
       .sort({ date: 1, timeSlot: 1 })
@@ -103,7 +102,6 @@ export class MeetingService {
     const today = now.toISOString().split('T')[0];
     const currentTime = now.toTimeString().slice(0, 5);
 
-    // Buscar todas as reuniões futuras do professor
     return this.meetingModel
       .find({
         $or: [
@@ -131,8 +129,8 @@ export class MeetingService {
   
 
   async notifyUsers(meeting: Meeting): Promise<void> {
-    const recipientId = meeting.userId; // Quem será notificado (no caso, o outro usuário)
-    const user = await this.userService.findOne(recipientId); // Buscar informações do usuário
+    const recipientId = meeting.userId;
+    const user = await this.userService.findOne(recipientId);
     if (!user) {
       console.error('Usuário não encontrado para notificação.');
       return;
@@ -140,7 +138,7 @@ export class MeetingService {
   
     const email = user.email;
     const subject = 'Reunião Cancelada';
-    const formattedDate = dayjs(meeting.date).format('DD/MM/YYYY'); // Formata a data no padrão brasileiro
+    const formattedDate = dayjs(meeting.date).format('DD/MM/YYYY');
     const text = `A sua reunião agendada para ${formattedDate} às ${meeting.timeSlot} foi cancelada.\nMotivo: ${meeting.cancelReason}`;
   
     try {

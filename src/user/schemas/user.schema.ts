@@ -17,7 +17,7 @@ export class User {
   @Prop({ required: true })
   password: string;
 
-  @Prop({ default: false }) // Definindo o valor padrão como 'false'
+  @Prop({ default: false })
   professor: boolean;
 }
 

@@ -3,7 +3,7 @@ import { Request as ExpressRequest } from 'express';
 import { AuthService } from './auth.service';
 import { CreateUserDto } from '../user/dto/create-user.dto';
 import { UnauthorizedException } from '@nestjs/common';
-import { JwtAuthGuard } from './guards/jwt.auth.guard'; // Importar o guard
+import { JwtAuthGuard } from './guards/jwt.auth.guard';
 
 @Controller('auth')
 export class AuthController {
@@ -23,7 +23,6 @@ export class AuthController {
     return this.authService.login(user);
   }
 
-  // Protege a rota com JWT e usa o método GET
   @UseGuards(JwtAuthGuard)
   @Get('me')
   async getUserFromRequest(@Req() request: ExpressRequest) {
