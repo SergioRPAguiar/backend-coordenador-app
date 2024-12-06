@@ -1,7 +1,7 @@
 import { IsString, IsBoolean, IsOptional } from 'class-validator';
 
 export class CreateMeetingDto {
-  @IsString() // Valida se é uma string
+  @IsString() 
   date: string;
 
   @IsString()

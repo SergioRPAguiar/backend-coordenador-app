@@ -46,12 +46,12 @@ export class MeetingController {
 
   @Patch(':id/cancel')
 async cancelMeeting(@Param('id') id: string, @Body() cancelDto: { reason: string }): Promise<Meeting> {
-  const meeting = await this.meetingService.cancel(id, cancelDto.reason);
-  if (!meeting) {
-    throw new NotFoundException(`Meeting with ID ${id} not found`);
-  }
-  await this.meetingService.notifyUsers(meeting);
-  return meeting;
+    const meeting = await this.meetingService.cancel(id, cancelDto.reason);
+    if (!meeting) {
+        throw new NotFoundException(`Meeting with ID ${id} not found`);
+    }
+    await this.meetingService.notifyUsers(meeting);
+    return meeting;
 }
 
   @Get(':id')
@@ -81,3 +81,4 @@ async cancelMeeting(@Param('id') id: string, @Body() cancelDto: { reason: string
     return { message: `Meeting with ID ${id} deleted successfully` };
   }
 }
+

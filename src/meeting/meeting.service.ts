@@ -5,7 +5,9 @@ import { Meeting, MeetingDocument } from './schemas/meeting.schema';
 import { CreateMeetingDto } from './dto/create-meeting.dto';
 import { UpdateMeetingDto } from './dto/update-meeting.dto';
 import { ScheduleService } from '../schedule/schedule.service';  // Importe o ScheduleService
-
+import { EmailService } from '../email/email.service';
+import { UserService } from '../user/user.service';
+import * as dayjs from 'dayjs'
 interface MeetingWithDateObject extends Meeting {
   dateObject?: Date;
 }
@@ -14,7 +16,9 @@ interface MeetingWithDateObject extends Meeting {
 export class MeetingService {
   constructor(
     @InjectModel(Meeting.name) private meetingModel: Model<MeetingDocument>,
-    private readonly scheduleService: ScheduleService
+    private readonly scheduleService: ScheduleService,
+    private readonly emailService: EmailService,
+    private readonly userService: UserService, 
   ) {}
 
   async create(createMeetingDto: CreateMeetingDto): Promise<Meeting> {
@@ -127,9 +131,26 @@ export class MeetingService {
   
 
   async notifyUsers(meeting: Meeting): Promise<void> {
-    console.log(`Notificando usuários sobre o cancelamento da reunião ${meeting.userId}`);
+    const recipientId = meeting.userId; // Quem será notificado (no caso, o outro usuário)
+    const user = await this.userService.findOne(recipientId); // Buscar informações do usuário
+    if (!user) {
+      console.error('Usuário não encontrado para notificação.');
+      return;
+    }
+  
+    const email = user.email;
+    const subject = 'Reunião Cancelada';
+    const formattedDate = dayjs(meeting.date).format('DD/MM/YYYY'); // Formata a data no padrão brasileiro
+    const text = `A sua reunião agendada para ${formattedDate} às ${meeting.timeSlot} foi cancelada.\nMotivo: ${meeting.cancelReason}`;
+  
+    try {
+      await this.emailService.sendEmail(email, subject, text);
+      console.log(`E-mail enviado para ${email}`);
+    } catch (error) {
+      console.error('Erro ao enviar e-mail:', error);
+    }
   }
-
+  
   async findAll(): Promise<Meeting[]> {
     return this.meetingModel.find().exec();
   }
@@ -163,4 +184,5 @@ export class MeetingService {
     }
     return { message: `Meeting with ID ${id} deleted successfully` };
   }
+  
 }
