@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, MiddlewareConsumer, RequestMethod } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 import { MeetingController } from './meeting/meeting.controller';
@@ -10,14 +10,15 @@ import { User, UserSchema } from './user/schemas/user.schema';
 import { AuthModule } from './auth/auth.module';
 import { UserModule } from './user/user.module';
 import { ScheduleModule } from './schedule/schedule.module';
-import { EmailModule } from './email/email.module'; // Adicione aqui o EmailModule
+import { EmailModule } from './email/email.module';
+import { HttpsRedirectMiddleware } from './middlewares/https-redirect.middleware'; 
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     AuthModule,
     UserModule,
-    MongooseModule.forRoot('mongodb://localhost:27017/back_agenda_cotad'),
+    MongooseModule.forRoot(process.env.MONGO_URI),
     MongooseModule.forFeature([{ name: Meeting.name, schema: MeetingSchema }]),
     MongooseModule.forFeature([{ name: User.name, schema: UserSchema }]),
     ScheduleModule,
@@ -26,4 +27,10 @@ import { EmailModule } from './email/email.module'; // Adicione aqui o EmailModu
   controllers: [MeetingController, UserController],
   providers: [MeetingService, UserService],
 })
-export class AppModule {}
+export class AppModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(HttpsRedirectMiddleware)
+      .exclude({ path: 'health', method: RequestMethod.GET })
+      .forRoutes('*');
+  }
+}
