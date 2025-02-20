@@ -1,4 +1,17 @@
-import { Controller, Get, Post, Body, Param, NotFoundException, Patch, Delete, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  NotFoundException,
+  Patch,
+  Delete,
+  UseGuards,
+  HttpException,
+  ConflictException,
+  HttpStatus,
+} from '@nestjs/common';
 import { ScheduleService } from './schedule.service';
 import { Schedule } from './schemas/schedule.schema';
 import { CreateScheduleDto } from './dto/create-schedule.dto';
@@ -16,11 +29,25 @@ export class ScheduleController {
 
   @UseGuards(AuthGuard('jwt'))
   @Post()
-  async create(@Body() createScheduleDto: CreateScheduleDto): Promise<Schedule> {
-    const { date, timeSlot, available } = createScheduleDto;
-    return this.scheduleService.markAvailability(date, timeSlot, available);
-}
-
+  async create(
+    @Body() createScheduleDto: CreateScheduleDto,
+  ): Promise<Schedule> {
+    try {
+      return await this.scheduleService.markAvailability(
+        createScheduleDto.date,
+        createScheduleDto.timeSlot,
+        createScheduleDto.available,
+      );
+    } catch (error) {
+      if (error instanceof ConflictException) {
+        throw new HttpException(error.message, HttpStatus.CONFLICT);
+      }
+      throw new HttpException(
+        'Internal server error',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
 
   @Get()
   async findAll(): Promise<Schedule[]> {
@@ -42,11 +69,20 @@ export class ScheduleController {
     @Param('id') id: string,
     @Body() updateScheduleDto: UpdateScheduleDto,
   ): Promise<Schedule> {
-    const updatedSchedule = await this.scheduleService.update(id, updateScheduleDto);
+    const updatedSchedule = await this.scheduleService.update(
+      id,
+      updateScheduleDto,
+    );
     if (!updatedSchedule) {
       throw new NotFoundException(`Schedule with ID ${id} not found`);
     }
     return updatedSchedule;
+  }
+
+  @Delete('clean')
+  async cleanSchedules(): Promise<{ message: string }> {
+    await this.scheduleService.cleanAllSchedules();
+    return { message: 'Todas as schedules foram removidas!' };
   }
 
   @UseGuards(AuthGuard('jwt'))

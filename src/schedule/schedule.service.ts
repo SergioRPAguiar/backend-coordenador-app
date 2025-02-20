@@ -1,9 +1,10 @@
-import { Injectable } from '@nestjs/common';
+import { ConflictException, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Schedule, ScheduleDocument } from './schemas/schedule.schema';
 import { CreateScheduleDto } from './dto/create-schedule.dto';
 import { UpdateScheduleDto } from './dto/update-schedule.dto';
+import { DeleteResult } from 'mongoose';
 
 @Injectable()
 export class ScheduleService {
@@ -38,14 +39,25 @@ export class ScheduleService {
   }
 
   async markAvailability(date: string, timeSlot: string, available: boolean): Promise<Schedule> {
-    const schedule = await this.scheduleModel.findOneAndUpdate(
+    return this.scheduleModel.findOneAndUpdate(
       { date, timeSlot },
       { available },
       { new: true, upsert: true }
     );
-    return schedule;
   }
   
+  async cleanAllSchedules(): Promise<DeleteResult> {
+    return this.scheduleModel.deleteMany({});
+  }
+
+  async isTimeSlotAvailable(date: string, timeSlot: string): Promise<boolean> {
+    const schedule = await this.scheduleModel.findOne({
+      date,
+      timeSlot
+    });
+    
+    return schedule?.available || false;
+  }
 
   async getAvailableSlots(date: string): Promise<Schedule[]> {
     return this.scheduleModel.find({ date, available: true }).exec();

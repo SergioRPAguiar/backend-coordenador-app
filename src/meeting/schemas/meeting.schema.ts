@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document } from 'mongoose';
+import mongoose, { Document } from 'mongoose';
 
 export type MeetingDocument = Meeting & Document;
 
@@ -14,15 +14,15 @@ export class Meeting {
   @Prop({ required: true })
   reason: string;
 
-  @Prop({ required: true })
-  userId: string;  
+  @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'User' })
+  userId: string; 
   
   @Prop({ default: false })
   canceled: boolean;
   
   @Prop()
   cancelReason: string;
-  
+
 }
 
 export const MeetingSchema = SchemaFactory.createForClass(Meeting);

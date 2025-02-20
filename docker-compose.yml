@@ -6,14 +6,15 @@ services:
     container_name: nest_backend
     ports:
       - '3000:3000'
+    env_file: .env
     environment:
-      MONGO_URI: mongodb://mongo:27017/nestdb
+      MONGO_URI: mongodb://mongo:27017/back_agenda_cotad
     depends_on:
       - mongo
 
   mongo:
     image: mongo
-    container_name: nest_mongo
+    container_name: bd_agenda_cotad
     ports:
       - '27017:27017'
     volumes:

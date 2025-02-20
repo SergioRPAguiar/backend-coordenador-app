@@ -2,7 +2,6 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
 
 export type ScheduleDocument = Schedule & Document;
-
 @Schema()
 export class Schedule {
   @Prop({ required: true })
@@ -16,3 +15,5 @@ export class Schedule {
 }
 
 export const ScheduleSchema = SchemaFactory.createForClass(Schedule);
+
+ScheduleSchema.index({ date: 1, timeSlot: 1 }, { unique: true });

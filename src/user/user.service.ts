@@ -11,9 +11,9 @@ export class UserService {
     @InjectModel(User.name) private userModel: Model<UserDocument>,
   ) {}
 
-  async create(createUserDto: CreateUserDto): Promise<User> {
-    const user = new this.userModel(createUserDto);
-    return user.save();
+  async create(createUserDto: CreateUserDto): Promise<UserDocument> {
+    const createdUser = new this.userModel(createUserDto);
+    return createdUser.save();
   }
 
   async findAll(): Promise<User[]> {
@@ -28,12 +28,8 @@ export class UserService {
     return user;
   }
 
-  async findByEmail(email: string): Promise<UserDocument | undefined> {
-    const user = await this.userModel.findOne({ email }).exec();
-    if (!user) {
-      throw new NotFoundException(`User with email ${email} not found`);
-    }
-    return user;
+  async findByEmail(email: string): Promise<UserDocument | null> {
+    return this.userModel.findOne({ email }).exec();
   }
 
   async update(id: string, updateUserDto: UpdateUserDto): Promise<User> {
@@ -52,5 +48,8 @@ export class UserService {
       throw new NotFoundException(`User with ID ${id} not found`);
     }
     return { message: `User with ID ${id} deleted successfully` };
+  }
+  async findAllProfessors(): Promise<User[]> {
+    return this.userModel.find({ professor: true }).exec();
   }
 }

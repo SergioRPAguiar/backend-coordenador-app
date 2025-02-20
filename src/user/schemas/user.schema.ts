@@ -5,6 +5,7 @@ export type UserDocument = User & Document;
 
 @Schema()
 export class User {
+
   @Prop({ required: true })
   name: string;
 
@@ -19,6 +20,12 @@ export class User {
 
   @Prop({ default: false })
   professor: boolean;
-}
 
+  @Prop({ default: false })
+  isConfirmed: boolean;
+
+  @Prop()
+  confirmationCode: string;
+
+}
 export const UserSchema = SchemaFactory.createForClass(User);

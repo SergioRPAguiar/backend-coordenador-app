@@ -5,11 +5,13 @@ import { AuthService } from './auth.service';
 import { JwtStrategy } from './jwt.strategy';
 import { UserModule } from '../user/user.module';
 import { AuthController } from './auth.controller';
+import { EmailModule } from '../email/email.module';
 
 @Module({
   imports: [
     UserModule,
     PassportModule,
+    EmailModule,
     JwtModule.register({
       secret: 'seuSegredoJWT',
       signOptions: { expiresIn: '60m' },

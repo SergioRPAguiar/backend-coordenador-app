@@ -20,4 +20,12 @@ export class CreateUserDto {
   @IsBoolean()
   @IsOptional()
   professor?: boolean;
+
+  @IsBoolean()
+  @IsOptional()
+  isConfirmed?: boolean;
+
+  @IsString()
+  @IsOptional()
+  confirmationCode?: string;
 }
