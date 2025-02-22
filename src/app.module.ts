@@ -25,7 +25,6 @@ import { FileUploadModule } from './file-upload/file-upload.module';
     ConfigModule.forRoot({ isGlobal: true }),
     AuthModule,
     UserModule,
-    ServeStaticModule.forRoot(FileUploadService.config()),
     FileUploadModule,
     MongooseModule.forRoot(process.env.MONGO_URI),
     MongooseModule.forFeature([{ name: Meeting.name, schema: MeetingSchema }]),

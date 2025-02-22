@@ -11,18 +11,12 @@ export class ConfigService {
 
   async getConfig() {
     let config = await this.configModel.findOne();
-    const newAppName = 'Agenda Cotad'; 
-    const newLogoUrl = `${process.env.API_URL_APP}/files/logoif.png`;
     
     if (!config) {
       config = await this.configModel.create({
-        appName: newAppName,
-        logoUrl: newLogoUrl,
+        appName: 'Agenda Cod', 
+        logoUrl: `${process.env.API_URL}/files/logo.png` 
       });
-    } else if (config.appName !== newAppName || config.logoUrl !== newLogoUrl) {
-      config.appName = newAppName;
-      config.logoUrl = newLogoUrl;
-      await config.save();
     }
     return config;
   }
@@ -31,11 +25,21 @@ export class ConfigService {
     let config = await this.configModel.findOne();
     if (!config) {
       config = await this.configModel.create({
-        appName: 'Agenda Cotad',
+        appName: 'Agenda',
         logoUrl,
       });
     } else {
       config.logoUrl = logoUrl;
+      await config.save();
+    }
+    return config;
+  }
+  async updateAppName(appName: string) {
+    let config = await this.configModel.findOne();
+    if (!config) {
+      config = await this.configModel.create({ appName });
+    } else {
+      config.appName = appName;
       await config.save();
     }
     return config;
