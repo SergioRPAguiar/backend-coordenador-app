@@ -60,7 +60,6 @@ export class AuthService {
       sub: user._id.toString(),
       professor: user.professor,
     };
-    console.log('Payload JWT:', payload);
     return {
       access_token: this.jwtService.sign(payload),
     };
@@ -89,7 +88,6 @@ export class AuthService {
         isConfirmed: false,
       });
 
-      // Envia o email de confirmação
       try {
         await this.emailService.sendEmail(
           user.email,
@@ -144,14 +142,16 @@ export class AuthService {
   async getUserFromRequest(request: Request) {
     const authHeader = request.headers.authorization;
     if (!authHeader) {
-      throw new UnauthorizedException('Authorization header not found');
+      throw new UnauthorizedException(
+        'Cabeçalho de autorização não encontrado',
+      );
     }
 
     const token = authHeader.split(' ')[1];
     const decoded = this.jwtService.verify(token) as JwtPayload;
     const user = await this.userService.findOne(decoded.sub);
     if (!user) {
-      throw new UnauthorizedException('User not found');
+      throw new UnauthorizedException('Usuário não encontrado');
     }
     return user;
   }

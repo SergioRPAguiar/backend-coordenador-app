@@ -39,11 +39,20 @@ export class ScheduleService {
   }
 
   async markAvailability(date: string, timeSlot: string, available: boolean): Promise<Schedule> {
-    return this.scheduleModel.findOneAndUpdate(
-      { date, timeSlot },
-      { available },
-      { new: true, upsert: true }
-    );
+    try {
+      return await this.scheduleModel.findOneAndUpdate(
+        { date, timeSlot },
+        { available },
+        { 
+          new: true,
+          upsert: true,
+          setDefaultsOnInsert: true 
+        }
+      );
+    } catch (error) {
+      console.error('Erro no markAvailability:', error);
+      throw new ConflictException('Erro ao atualizar horário');
+    }
   }
   
   async cleanAllSchedules(): Promise<DeleteResult> {

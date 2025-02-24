@@ -75,7 +75,7 @@ export class MeetingService {
 
     if (!meeting) {
       throw new NotFoundException(
-        `No upcoming meetings found for user with ID ${id}`,
+        `Nenhuma reunião futura encontrada para o usuário com ID ${id}`,
       );
     }
 
@@ -109,7 +109,7 @@ export class MeetingService {
       .exec();
 
     if (!meeting) {
-      throw new NotFoundException('No upcoming meetings found');
+      throw new NotFoundException('Nenhuma reunião futura encontrada');
     }
 
     const meetingObject = meeting.toObject();
@@ -147,7 +147,7 @@ export class MeetingService {
       .exec();
 
     if (!meeting) {
-      throw new NotFoundException(`Meeting with ID ${id} not found`);
+      throw new NotFoundException(`Reunião com ID ${id} não encontrada`);
     }
 
     return meeting;
@@ -168,7 +168,6 @@ export class MeetingService {
 
     try {
       await this.emailService.sendEmail(email, subject, text);
-      console.log(`E-mail enviado para ${email}`);
     } catch (error) {
       console.error('Erro ao enviar e-mail:', error);
     }

@@ -1,4 +1,14 @@
-import { Controller, Get, Post, Body, Param, NotFoundException, Patch, Delete, Query } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  NotFoundException,
+  Patch,
+  Delete,
+  Query,
+} from '@nestjs/common';
 import { MeetingService } from './meeting.service';
 import { Meeting } from './schemas/meeting.schema';
 import { CreateMeetingDto } from './dto/create-meeting.dto';
@@ -10,15 +20,18 @@ export class MeetingController {
 
   @Post()
   async create(@Body() createMeetingDto: CreateMeetingDto): Promise<Meeting> {
-    console.log('Dados recebidos para criar a reunião:', createMeetingDto);
     return this.meetingService.create(createMeetingDto);
   }
 
   @Get('next')
-  async findNextMeeting(@Query('userId') userId: string): Promise<Meeting | null> {
+  async findNextMeeting(
+    @Query('userId') userId: string,
+  ): Promise<Meeting | null> {
     const meeting = await this.meetingService.findNextMeetingByUserId(userId);
     if (!meeting) {
-      throw new NotFoundException(`No upcoming meetings found for user with ID ${userId}`);
+      throw new NotFoundException(
+        `Nenhuma reunião futura encontrada para o usuário com ID ${userId}`,
+      );
     }
     return meeting;
   }
@@ -39,34 +52,45 @@ export class MeetingController {
   }
 
   @Get('allForStudent')
-  async findAllMeetingsForStudent(@Query('userId') userId: string): Promise<Meeting[]> {
+  async findAllMeetingsForStudent(
+    @Query('userId') userId: string,
+  ): Promise<Meeting[]> {
     return this.meetingService.findAllMeetingsForStudent(userId);
   }
 
   @Patch(':id/cancel')
-async cancelMeeting(@Param('id') id: string, @Body() cancelDto: { reason: string }): Promise<Meeting> {
+  async cancelMeeting(
+    @Param('id') id: string,
+    @Body() cancelDto: { reason: string },
+  ): Promise<Meeting> {
     const meeting = await this.meetingService.cancel(id, cancelDto.reason);
     if (!meeting) {
-        throw new NotFoundException(`Meeting with ID ${id} not found`);
+      throw new NotFoundException(`Reunião com ID ${id} não encontrada`);
     }
     await this.meetingService.notifyUsers(meeting);
     return meeting;
-}
+  }
 
   @Get(':id')
   async findOne(@Param('id') id: string): Promise<Meeting> {
     const meeting = await this.meetingService.findOne(id);
     if (!meeting) {
-      throw new NotFoundException(`Meeting with ID ${id} not found`);
+      throw new NotFoundException(`Reunião com ID ${id} não encontrada`);
     }
     return meeting;
   }
 
   @Patch(':id')
-  async update(@Param('id') id: string, @Body() updateMeetingDto: UpdateMeetingDto): Promise<Meeting> {
-    const updatedMeeting = await this.meetingService.update(id, updateMeetingDto);
+  async update(
+    @Param('id') id: string,
+    @Body() updateMeetingDto: UpdateMeetingDto,
+  ): Promise<Meeting> {
+    const updatedMeeting = await this.meetingService.update(
+      id,
+      updateMeetingDto,
+    );
     if (!updatedMeeting) {
-      throw new NotFoundException(`Meeting with ID ${id} not found`);
+      throw new NotFoundException(`Reunião com ID ${id} não encontrada`);
     }
     return updatedMeeting;
   }
@@ -77,7 +101,6 @@ async cancelMeeting(@Param('id') id: string, @Body() cancelDto: { reason: string
     if (!result) {
       throw new NotFoundException(`Meeting with ID ${id} not found`);
     }
-    return { message: `Meeting with ID ${id} deleted successfully` };
+    return { message: `Reunião com ID ${id} excluída com sucesso` };
   }
 }
-

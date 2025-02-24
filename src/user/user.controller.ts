@@ -1,4 +1,13 @@
-import { Controller, Get, Post, Body, Param, NotFoundException, Patch, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  NotFoundException,
+  Patch,
+  Delete,
+} from '@nestjs/common';
 import { UserService } from './user.service';
 import { User } from './schemas/user.schema';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -22,7 +31,7 @@ export class UserController {
   async findOne(@Param('id') id: string): Promise<User> {
     const user = await this.userService.findOne(id);
     if (!user) {
-      throw new NotFoundException(`User with ID ${id} not found`);
+      throw new NotFoundException(`Usuário com ID ${id} não encontrado`);
     }
     return user;
   }
@@ -34,7 +43,7 @@ export class UserController {
   ): Promise<User> {
     const updatedUser = await this.userService.update(id, updateUserDto);
     if (!updatedUser) {
-      throw new NotFoundException(`User with ID ${id} not found`);
+      throw new NotFoundException(`Usuário com ID ${id} não encontrado`);
     }
     return updatedUser;
   }
@@ -43,8 +52,8 @@ export class UserController {
   async remove(@Param('id') id: string): Promise<{ message: string }> {
     const result = await this.userService.remove(id);
     if (!result) {
-      throw new NotFoundException(`User with ID ${id} not found`);
+      throw new NotFoundException(`Usuário com ID ${id} não encontrado`);
     }
-    return { message: `User with ID ${id} deleted successfully` };
+    return { message: `Usuário com ID ${id} deletado com sucesso` };
   }
 }
