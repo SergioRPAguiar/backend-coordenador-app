@@ -5,15 +5,21 @@ services:
     build: .
     container_name: nest_backend
     ports:
-      - '3000:3000'
+      - '443:3000'  
+      - '80:3000'   
     env_file: .env
     environment:
-      MONGO_URI: mongodb://mongo:27017/back_agenda_cotad
+      MONGO_URI: mongodb://${MONGO_USER}:${MONGO_PASSWORD}@mongo:27017/back_agenda_cotad?authSource=admin
+    volumes:
+      - ./data/certs:/etc/letsencrypt/live/SEU_DOMINIO  
     depends_on:
       - mongo
+    restart: unless-stopped 
+    networks:
+      - backend-network
 
   mongo:
-    image: mongo
+    image: mongo:latest
     container_name: bd_agenda_cotad
     ports:
       - '27017:27017'

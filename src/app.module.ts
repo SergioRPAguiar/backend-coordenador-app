@@ -41,8 +41,8 @@ import { FileUploadModule } from './file-upload/file-upload.module';
 })
 export class AppModule {
   configure(consumer: MiddlewareConsumer) {
-    //consumer.apply(HttpsRedirectMiddleware)
-      //.exclude({ path: 'health', method: RequestMethod.GET })
-      //.forRoutes('*');
+    consumer.apply(HttpsRedirectMiddleware)
+      .exclude({ path: 'health', method: RequestMethod.GET })
+      .forRoutes('*');
   }
 }
