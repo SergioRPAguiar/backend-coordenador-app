@@ -13,6 +13,7 @@ import { UserModule } from './user/user.module';
 import { ScheduleModule as MyScheduleModule } from './schedule/schedule.module';
 import { ScheduleModule as NestScheduleModule } from '@nestjs/schedule';
 import { EmailModule } from './email/email.module';
+import { HealthController } from './health/health.controller';
 import { FileUploadModule } from './file-upload/file-upload.module';
 
 @Module({
@@ -29,8 +30,9 @@ import { FileUploadModule } from './file-upload/file-upload.module';
     ]),
     MyScheduleModule,
     EmailModule,
+    
   ],
-  controllers: [MeetingController, UserController],
+  controllers: [MeetingController, UserController, HealthController],
   providers: [
     MeetingService,
     UserService,
