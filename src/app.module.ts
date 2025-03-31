@@ -1,4 +1,4 @@
-import { Module, MiddlewareConsumer, RequestMethod } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 import { MeetingController } from './meeting/meeting.controller';
@@ -13,11 +13,7 @@ import { UserModule } from './user/user.module';
 import { ScheduleModule as MyScheduleModule } from './schedule/schedule.module';
 import { ScheduleModule as NestScheduleModule } from '@nestjs/schedule';
 import { EmailModule } from './email/email.module';
-import { ServeStaticModule } from '@nestjs/serve-static';
-import { HttpsRedirectMiddleware } from './middlewares/https-redirect.middleware'; 
-import { FileUploadService } from './file-upload/file-upload.service';
 import { FileUploadModule } from './file-upload/file-upload.module';
-
 
 @Module({
   imports: [
@@ -26,23 +22,19 @@ import { FileUploadModule } from './file-upload/file-upload.module';
     AuthModule,
     UserModule,
     FileUploadModule,
-    MongooseModule.forRoot(process.env.MONGO_URI),
-    MongooseModule.forFeature([{ name: Meeting.name, schema: MeetingSchema }]),
-    MongooseModule.forFeature([{ name: User.name, schema: UserSchema }]),
+    MongooseModule.forRoot(process.env.MONGO_URI), // Usar variável de ambiente diretamente
+    MongooseModule.forFeature([
+      { name: Meeting.name, schema: MeetingSchema },
+      { name: User.name, schema: UserSchema }
+    ]),
     MyScheduleModule,
     EmailModule,
   ],
   controllers: [MeetingController, UserController],
   providers: [
-    MeetingService, 
+    MeetingService,
     UserService,
     NotificationService
   ],
 })
-export class AppModule {
-  configure(consumer: MiddlewareConsumer) {
-    consumer.apply(HttpsRedirectMiddleware)
-      .exclude({ path: 'health', method: RequestMethod.GET })
-      .forRoutes('*');
-  }
-}
+export class AppModule {}
