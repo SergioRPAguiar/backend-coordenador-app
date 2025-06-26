@@ -5,27 +5,15 @@ services:
     build: .
     container_name: nest_backend
     ports:
-      - '30000:3000'
+      - '3000:3000' # Porta padrão
     env_file: .env
-    environment:
-      - NODE_ENV=production
-      - MONGO_URI=mongodb://${MONGO_USER}:${MONGO_PASSWORD}@mongo:27017/back_agenda_cotad?authSource=admin
     depends_on:
       - mongo
-    networks:
-      - backend-network
 
   mongo:
     image: mongo:latest
     container_name: bd_agenda_cotad
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USER}
-      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD}
+    ports:
+      - '27017:27017' 
     volumes:
       - ./data/db:/data/db
-    networks:
-      - backend-network
-
-networks:
-  backend-network:
-    driver: bridge

@@ -1,10 +1,9 @@
 import { ConflictException, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, DeleteResult } from 'mongoose';
 import { Schedule, ScheduleDocument } from './schemas/schedule.schema';
 import { CreateScheduleDto } from './dto/create-schedule.dto';
 import { UpdateScheduleDto } from './dto/update-schedule.dto';
-import { DeleteResult } from 'mongoose';
 
 @Injectable()
 export class ScheduleService {
@@ -18,7 +17,14 @@ export class ScheduleService {
 
   async create(createScheduleDto: CreateScheduleDto): Promise<Schedule> {
     const createdSchedule = new this.scheduleModel(createScheduleDto);
-    return createdSchedule.save();
+    try {
+      return await createdSchedule.save();
+    } catch (error) {
+      if (error.code === 11000) {
+        throw new ConflictException('Horário já cadastrado para esta data');
+      }
+      throw error;
+    }
   }
 
   async findAll(): Promise<Schedule[]> {
@@ -38,15 +44,22 @@ export class ScheduleService {
     return result !== null;
   }
 
-  async markAvailability(date: string, timeSlot: string, available: boolean): Promise<Schedule> {
+  async markAvailability(
+    date: string,
+    timeSlot: string,
+    available: boolean
+  ): Promise<Schedule> {
     try {
       return await this.scheduleModel.findOneAndUpdate(
         { date, timeSlot },
-        { available },
-        { 
+        {
+          $set: { available },
+          $setOnInsert: { date, timeSlot }
+        },
+        {
           new: true,
           upsert: true,
-          setDefaultsOnInsert: true 
+          setDefaultsOnInsert: true
         }
       );
     } catch (error) {
@@ -54,17 +67,16 @@ export class ScheduleService {
       throw new ConflictException('Erro ao atualizar horário');
     }
   }
-  
+
   async cleanAllSchedules(): Promise<DeleteResult> {
     return this.scheduleModel.deleteMany({});
   }
 
-  async isTimeSlotAvailable(date: string, timeSlot: string): Promise<boolean> {
-    const schedule = await this.scheduleModel.findOne({
-      date,
-      timeSlot
-    });
-    
+  async isTimeSlotAvailable(
+    date: string,
+    timeSlot: string
+  ): Promise<boolean> {
+    const schedule = await this.scheduleModel.findOne({ date, timeSlot });
     return schedule?.available || false;
   }
 

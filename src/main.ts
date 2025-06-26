@@ -4,16 +4,19 @@ import { AppModule } from './app.module';
 import { NestExpressApplication } from '@nestjs/platform-express';
 
 async function bootstrap() {
-  const app = await NestFactory.create<NestExpressApplication>(AppModule);
+  const app = await NestFactory.create(AppModule);
 
-  app.set('trust proxy', true);
-  
+  //app.enableCors({
+    //origin: 'https://www.ifms.pro.br',
+    //credentials: true
+  //});
+
   app.enableCors({
-    origin: 'https://www.ifms.pro.br',
+    origin: true, // Permite qualquer origem
     credentials: true
   });
 
-  app.setGlobalPrefix('api');
+  //app.setGlobalPrefix('api');
 
   app.useGlobalPipes(
     new ValidationPipe({

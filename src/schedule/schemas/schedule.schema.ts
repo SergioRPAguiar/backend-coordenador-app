@@ -16,4 +16,7 @@ export class Schedule {
 
 export const ScheduleSchema = SchemaFactory.createForClass(Schedule);
 
-ScheduleSchema.index({ date: 1, timeSlot: 1 }, { unique: true });
+ScheduleSchema.index(
+  { date: 1, timeSlot: 1 },
+  { unique: true, name: 'date_1_timeSlot_1' }
+);

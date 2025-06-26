@@ -1,3 +1,17 @@
+db.schedules.getIndexes();
+use back_agenda_cotad
+ScheduleSchema.index({ date: 1, timeSlot: 1 }, { unique: true });
+db.schedules.getIndexes()
+db.schedules.createIndex( { date: 1, timeSlot: 1 }, { unique: true, name: "date_1_timeSlot_1" } )
+db.schedules.dropIndex("unique_date_timeslot")
+db.schedules.getIndexes()
+db.schedules.createIndex( { date: 1, timeSlot: 1 }, { unique: true, name: 'date_1_timeSlot_1' } )
+db.schedules.dropIndex('timeSlot_1')
+show collections
+use back_agenda_cotad
+show dbs
+show
+show db
 db.schedule.getIndexes();
 db.schedule.createIndex({ date: 1, timeSlot: 1 }, { unique: true });
 db.schedule.getIndexes();
