@@ -7,11 +7,16 @@ import {
   NotFoundException,
   Patch,
   Delete,
+  UseGuards,
+  Request,
+  ForbiddenException,
+  Req,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { User } from './schemas/user.schema';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { JwtAuthGuard } from 'src/auth/guards/jwt.auth.guard';
 
 @Controller('user')
 export class UserController {
@@ -34,6 +39,40 @@ export class UserController {
       throw new NotFoundException(`Usuário com ID ${id} não encontrado`);
     }
     return user;
+  }
+
+  @Patch(':id/set-admin')
+  @UseGuards(JwtAuthGuard)
+  async setAdminStatus(
+    @Param('id') id: string,
+    @Body('isAdmin') isAdmin: boolean,
+    @Req() req: any,
+  ): Promise<User> {
+    // Só um admin pode promover outro
+    if (!req.user.isAdmin) {
+      throw new NotFoundException(
+        'Acesso negado: apenas administradores podem promover usuários.',
+      );
+    }
+
+    return this.userService.setAdminStatus(id, isAdmin);
+  }
+
+  @Patch(':id/promote')
+  @UseGuards(JwtAuthGuard)
+  async promoteToProfessor(
+    @Param('id') id: string,
+    @Request() req,
+  ): Promise<User> {
+    const user = req.user;
+
+    if (!user.isAdmin) {
+      throw new ForbiddenException(
+        'Acesso negado. Apenas administradores podem fazer isso.',
+      );
+    }
+
+    return this.userService.update(id, { professor: true });
   }
 
   @Patch(':id')

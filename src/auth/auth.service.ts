@@ -35,6 +35,36 @@ export class AuthService {
     return null;
   }
 
+  async resetPassword(email: string, code: string, newPassword: string) {
+    const user = await this.userService.findByEmail(email);
+    if (!user) {
+      throw new NotFoundException('Usuário não encontrado');
+    }
+
+    console.log('Código enviado:', code);
+    console.log('Código no banco:', user.passwordResetCode);
+
+    if (user.passwordResetCode !== code) {
+      throw new BadRequestException('Código inválidoooo');
+    }
+
+    if (
+      !user.passwordResetExpiresAt ||
+      new Date() > new Date(user.passwordResetExpiresAt)
+    ) {
+      throw new BadRequestException('Código expirado');
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    await this.userService.update(user._id.toString(), {
+      password: hashedPassword,
+      passwordResetCode: null,
+      passwordResetExpiresAt: null,
+    });
+
+    return { message: 'Senha redefinida com sucesso' };
+  }
+
   async confirmUser(email: string, code: string) {
     const user = await this.userService.findByEmail(email);
 
@@ -42,7 +72,10 @@ export class AuthService {
       throw new NotFoundException('Usuário não encontrado');
     }
 
-    if (user.confirmationCode !== code) {
+    console.log('Código enviado:', code);
+    console.log('Código salvo no usuário:', user.confirmationCode);
+
+    if (user.confirmationCode !== code.trim()) {
       throw new UnauthorizedException('Código inválido');
     }
 

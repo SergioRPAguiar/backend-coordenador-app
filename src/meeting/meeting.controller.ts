@@ -61,12 +61,18 @@ export class MeetingController {
   @Patch(':id/cancel')
   async cancelMeeting(
     @Param('id') id: string,
-    @Body() cancelDto: { reason: string },
+    @Body() cancelDto: { reason: string; userId: string },
   ): Promise<Meeting> {
-    const meeting = await this.meetingService.cancel(id, cancelDto.reason);
+    const meeting = await this.meetingService.cancel(
+      id,
+      cancelDto.reason,
+      cancelDto.userId,
+    );
+
     if (!meeting) {
       throw new NotFoundException(`Reunião com ID ${id} não encontrada`);
     }
+
     await this.meetingService.notifyUsers(meeting);
     return meeting;
   }
@@ -102,5 +108,9 @@ export class MeetingController {
       throw new NotFoundException(`Meeting with ID ${id} not found`);
     }
     return { message: `Reunião com ID ${id} excluída com sucesso` };
+  }
+  @Delete()
+  async removeAll(): Promise<{ message: string }> {
+    return this.meetingService.removeAll();
   }
 }

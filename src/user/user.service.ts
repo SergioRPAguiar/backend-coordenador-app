@@ -4,6 +4,7 @@ import { Model } from 'mongoose';
 import { User, UserDocument } from './schemas/user.schema';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class UserService {
@@ -18,7 +19,7 @@ export class UserService {
     return this.userModel.find().exec();
   }
 
-  async findOne(id: string): Promise<User> {
+  async findOne(id: string): Promise<UserDocument> {
     const user = await this.userModel.findById(id).exec();
     if (!user) {
       throw new NotFoundException(`Usuário com ID ${id} não encontrado`);
@@ -28,6 +29,26 @@ export class UserService {
 
   async findByEmail(email: string): Promise<UserDocument | null> {
     return this.userModel.findOne({ email }).exec();
+  }
+
+  async setAdminStatus(userId: string, isAdmin: boolean): Promise<User> {
+    const user = await this.userModel
+      .findByIdAndUpdate(userId, { isAdmin }, { new: true })
+      .exec();
+
+    if (!user) {
+      throw new NotFoundException(`Usuário com ID ${userId} não encontrado`);
+    }
+
+    return user;
+  }
+
+  async updatePassword(id: string, newPassword: string): Promise<User> {
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    return this.userModel
+      .findByIdAndUpdate(id, { password: hashedPassword }, { new: true })
+      .exec();
   }
 
   async update(id: string, updateUserDto: UpdateUserDto): Promise<User> {

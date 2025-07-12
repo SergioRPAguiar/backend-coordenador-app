@@ -12,6 +12,8 @@ import { ScheduleService } from '../schedule/schedule.service';
 import { EmailService } from '../email/email.service';
 import { UserService } from '../user/user.service';
 import * as dayjs from 'dayjs';
+import * as customParseFormat from 'dayjs/plugin/customParseFormat';
+dayjs.extend(customParseFormat);
 interface MeetingWithDateObject extends Meeting {
   dateObject?: Date;
 }
@@ -26,10 +28,20 @@ export class MeetingService {
   ) {}
 
   async create(createMeetingDto: CreateMeetingDto): Promise<Meeting> {
+    // 🔧 Normaliza a data para 'YYYY-MM-DD'
+    const formattedDate = dayjs(createMeetingDto.date).format('YYYY-MM-DD');
+
     const isAvailable = await this.scheduleService.isTimeSlotAvailable(
-      createMeetingDto.date,
+      formattedDate,
       createMeetingDto.timeSlot,
     );
+
+    const diaSemana = new Date(formattedDate).getDay();
+    if (diaSemana === 6) {
+      throw new BadRequestException(
+        'Reuniões não podem ser marcadas no Domingo',
+      );
+    }
 
     if (!isAvailable) {
       throw new BadRequestException('Horário indisponível');
@@ -44,11 +56,14 @@ export class MeetingService {
       throw new BadRequestException('Faltam informações obrigatórias');
     }
 
-    const createdMeeting = new this.meetingModel(createMeetingDto);
+    const createdMeeting = new this.meetingModel({
+      ...createMeetingDto,
+      date: formattedDate,
+    });
     await createdMeeting.save();
 
     await this.scheduleService.markAvailability(
-      createMeetingDto.date,
+      formattedDate,
       createMeetingDto.timeSlot,
       false,
     );
@@ -57,29 +72,37 @@ export class MeetingService {
   }
 
   async findNextMeetingByUserId(id: string): Promise<Meeting | null> {
-    const now = new Date();
-    const today = now.toISOString().split('T')[0];
-    const currentTime = now.toTimeString().slice(0, 5);
-
-    const meeting = await this.meetingModel
-      .findOne({
+    const now = dayjs();
+    const allMeetings = await this.meetingModel
+      .find({
         userId: id,
         canceled: false,
-        $or: [
-          { date: { $gt: today } },
-          { date: today, timeSlot: { $gt: currentTime } },
-        ],
       })
       .sort({ date: 1, timeSlot: 1 })
       .exec();
 
-    if (!meeting) {
+    console.log('Filtrando reuniões futuras para o usuário:', id);
+    console.log(
+      'Reuniões encontradas:',
+      allMeetings.map((m) => m.date + ' ' + m.timeSlot),
+    );
+
+    const nextMeeting = allMeetings.find((meeting) => {
+      const startHour = meeting.timeSlot.split(' - ')[0];
+      const fullDateTime = dayjs(
+        `${meeting.date} ${startHour}`,
+        'YYYY-MM-DD HH:mm',
+      );
+      return fullDateTime.isAfter(now);
+    });
+
+    if (!nextMeeting) {
       throw new NotFoundException(
         `Nenhuma reunião futura encontrada para o usuário com ID ${id}`,
       );
     }
 
-    return meeting;
+    return nextMeeting;
   }
 
   async findAllMeetingsForStudent(userId: string): Promise<Meeting[]> {
@@ -132,12 +155,16 @@ export class MeetingService {
           { date: today, timeSlot: { $gt: currentTime } },
         ],
       })
-      .populate('userId', 'name email')
+      .populate('userId', 'name email contato')
       .sort({ date: 1, timeSlot: 1 })
       .exec();
   }
 
-  async cancel(id: string, reason: string): Promise<Meeting | null> {
+  async cancel(
+    id: string,
+    reason: string,
+    userId: string,
+  ): Promise<Meeting | null> {
     const meeting = await this.meetingModel
       .findByIdAndUpdate(
         id,
@@ -150,7 +177,25 @@ export class MeetingService {
       throw new NotFoundException(`Reunião com ID ${id} não encontrada`);
     }
 
+    const user = await this.userService.findOne(userId);
+    const isStudent = !user?.professor;
+
+    if (isStudent) {
+      await this.scheduleService.markAvailability(
+        meeting.date,
+        meeting.timeSlot,
+        true,
+      );
+    }
+
     return meeting;
+  }
+
+  async removeAll(): Promise<{ message: string }> {
+    const result = await this.meetingModel.deleteMany({});
+    return {
+      message: `${result.deletedCount} reuniões foram removidas com sucesso`,
+    };
   }
 
   async notifyUsers(meeting: Meeting): Promise<void> {
@@ -164,7 +209,7 @@ export class MeetingService {
     const email = user.email;
     const subject = 'Reunião Cancelada';
     const formattedDate = dayjs(meeting.date).format('DD/MM/YYYY');
-    const text = `A sua reunião agendada para ${formattedDate} às ${meeting.timeSlot} foi cancelada.\nMotivo: ${meeting.cancelReason}`;
+    const text = `Olá! A reunião agendada no Coordenador.app para o dia ${formattedDate} às ${meeting.timeSlot} foi cancelada.\n\nMotivo do cancelamento: ${meeting.cancelReason}`;
 
     try {
       await this.emailService.sendEmail(email, subject, text);

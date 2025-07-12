@@ -4,11 +4,13 @@ import { Model, DeleteResult } from 'mongoose';
 import { Schedule, ScheduleDocument } from './schemas/schedule.schema';
 import { CreateScheduleDto } from './dto/create-schedule.dto';
 import { UpdateScheduleDto } from './dto/update-schedule.dto';
-
+import { Meeting, MeetingDocument } from '../meeting/schemas/meeting.schema';
+import * as dayjs from 'dayjs';
 @Injectable()
 export class ScheduleService {
   constructor(
-    @InjectModel(Schedule.name) private scheduleModel: Model<ScheduleDocument>
+    @InjectModel(Schedule.name) private scheduleModel: Model<ScheduleDocument>,
+    @InjectModel(Meeting.name) private meetingModel: Model<MeetingDocument>,
   ) {}
 
   async findAvailableByDate(date: string): Promise<Schedule[]> {
@@ -35,8 +37,13 @@ export class ScheduleService {
     return this.scheduleModel.findById(id).exec();
   }
 
-  async update(id: string, updateScheduleDto: UpdateScheduleDto): Promise<Schedule | null> {
-    return this.scheduleModel.findByIdAndUpdate(id, updateScheduleDto, { new: true }).exec();
+  async update(
+    id: string,
+    updateScheduleDto: UpdateScheduleDto,
+  ): Promise<Schedule | null> {
+    return this.scheduleModel
+      .findByIdAndUpdate(id, updateScheduleDto, { new: true })
+      .exec();
   }
 
   async remove(id: string): Promise<boolean> {
@@ -47,24 +54,41 @@ export class ScheduleService {
   async markAvailability(
     date: string,
     timeSlot: string,
-    available: boolean
+    available: boolean,
   ): Promise<Schedule> {
     try {
+      const formattedDate = dayjs(date).format('YYYY-MM-DD'); // normaliza
+
+      // Se for liberar, verificar se não tem reunião já marcada
+      if (available) {
+        const existingMeeting = await this.meetingModel.findOne({
+          date: formattedDate,
+          timeSlot,
+          canceled: false,
+        });
+
+        if (existingMeeting) {
+          throw new ConflictException(
+            `Horário já reservado para ${formattedDate} às ${timeSlot}`,
+          );
+        }
+      }
+
       return await this.scheduleModel.findOneAndUpdate(
-        { date, timeSlot },
+        { date: formattedDate, timeSlot },
         {
           $set: { available },
-          $setOnInsert: { date, timeSlot }
+          $setOnInsert: { date: formattedDate, timeSlot },
         },
         {
           new: true,
           upsert: true,
-          setDefaultsOnInsert: true
-        }
+          setDefaultsOnInsert: true,
+        },
       );
     } catch (error) {
       console.error('Erro no markAvailability:', error);
-      throw new ConflictException('Erro ao atualizar horário');
+      throw new ConflictException(error.message || 'Erro ao atualizar horário');
     }
   }
 
@@ -72,11 +96,12 @@ export class ScheduleService {
     return this.scheduleModel.deleteMany({});
   }
 
-  async isTimeSlotAvailable(
-    date: string,
-    timeSlot: string
-  ): Promise<boolean> {
-    const schedule = await this.scheduleModel.findOne({ date, timeSlot });
+  async isTimeSlotAvailable(date: string, timeSlot: string): Promise<boolean> {
+    const formattedDate = dayjs(date).format('YYYY-MM-DD');
+    const schedule = await this.scheduleModel.findOne({
+      date: formattedDate,
+      timeSlot,
+    });
     return schedule?.available || false;
   }
 

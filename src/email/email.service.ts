@@ -23,4 +23,12 @@ export class EmailService {
       text,
     });
   }
+  async sendResetPasswordCode(email: string, code: string) {
+  await this.transporter.sendMail({
+    to: email,
+    subject: 'Código para redefinição de senha',
+    text: `Seu código é: ${code}`,
+    html: `<p>Use o código abaixo para redefinir sua senha:</p><h2>${code}</h2>`,
+  });
+}
 }

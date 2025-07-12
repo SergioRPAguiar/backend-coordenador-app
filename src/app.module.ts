@@ -15,6 +15,7 @@ import { ScheduleModule as NestScheduleModule } from '@nestjs/schedule';
 import { EmailModule } from './email/email.module';
 import { HealthController } from './health/health.controller';
 import { FileUploadModule } from './file-upload/file-upload.module';
+import { NotificationModule } from './cron/notification.module';
 
 @Module({
   imports: [
@@ -22,8 +23,9 @@ import { FileUploadModule } from './file-upload/file-upload.module';
     ConfigModule.forRoot({ isGlobal: true }),
     AuthModule,
     UserModule,
+    NotificationModule,
     FileUploadModule,
-    MongooseModule.forRoot(process.env.MONGO_URI), // Usar variável de ambiente diretamente
+    MongooseModule.forRoot(process.env.MONGO_URI), 
     MongooseModule.forFeature([
       { name: Meeting.name, schema: MeetingSchema },
       { name: User.name, schema: UserSchema }

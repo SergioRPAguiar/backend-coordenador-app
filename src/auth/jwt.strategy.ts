@@ -21,6 +21,13 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
         'Usuário não encontrado ou não autorizado',
       );
     }
-    return user;
+
+    return {
+      id: user._id,
+      email: user.email,
+      isAdmin: user.isAdmin,
+      professor: user.professor,
+      name: user.name,
+    };
   }
 }
