@@ -10,7 +10,7 @@ import { MeetingModule } from '../meeting/meeting.module';
     MongooseModule.forFeature([
       { name: Schedule.name, schema: ScheduleSchema },
     ]),
-    forwardRef(() => MeetingModule), // ✅ Aqui
+    forwardRef(() => MeetingModule),
   ],
   controllers: [ScheduleController],
   providers: [ScheduleService],

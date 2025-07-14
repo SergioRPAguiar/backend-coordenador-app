@@ -16,16 +16,4 @@ export class CreateUserDto {
   @IsString()
   @IsNotEmpty()
   password: string;
-
-  @IsBoolean()
-  @IsOptional()
-  professor?: boolean;
-
-  @IsBoolean()
-  @IsOptional()
-  isConfirmed?: boolean;
-
-  @IsString()
-  @IsOptional()
-  confirmationCode?: string;
 }

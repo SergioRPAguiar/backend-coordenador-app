@@ -12,6 +12,10 @@ import { CreateUserDto } from '../user/dto/create-user.dto';
 import { EmailService } from '../email/email.service';
 import { User } from '../user/types/user.types';
 
+type CreateUserWithSystemFields = CreateUserDto & {
+  confirmationCode: string;
+  isConfirmed: boolean;
+};
 @Injectable()
 export class AuthService {
   constructor(
@@ -41,9 +45,6 @@ export class AuthService {
       throw new NotFoundException('Usuário não encontrado');
     }
 
-    console.log('Código enviado:', code);
-    console.log('Código no banco:', user.passwordResetCode);
-
     if (user.passwordResetCode !== code) {
       throw new BadRequestException('Código inválidoooo');
     }
@@ -65,26 +66,30 @@ export class AuthService {
     return { message: 'Senha redefinida com sucesso' };
   }
 
-  async confirmUser(email: string, code: string) {
+  async confirmUser(email: string, code: string): Promise<{ message: string }> {
     const user = await this.userService.findByEmail(email);
-
     if (!user) {
       throw new NotFoundException('Usuário não encontrado');
     }
 
-    console.log('Código enviado:', code);
-    console.log('Código salvo no usuário:', user.confirmationCode);
+    if (
+      user.confirmationCodeExpiresAt &&
+      new Date() > new Date(user.confirmationCodeExpiresAt)
+    ) {
+      throw new UnauthorizedException('Código expirado');
+    }
 
-    if (user.confirmationCode !== code.trim()) {
+    if (user.confirmationCode?.trim() !== code.trim()) {
       throw new UnauthorizedException('Código inválido');
     }
 
-    await this.userService.update(user._id.toString(), {
-      isConfirmed: true,
-      confirmationCode: null,
-    });
+    user.isConfirmed = true;
+    user.confirmationCode = undefined;
+    user.confirmationCodeExpiresAt = undefined;
 
-    return { message: 'Cadastro confirmado com sucesso!' };
+    await user.save();
+
+    return { message: 'Conta confirmada com sucesso' };
   }
 
   async login(user: any) {
@@ -119,7 +124,7 @@ export class AuthService {
         password: hashedPassword,
         confirmationCode,
         isConfirmed: false,
-      });
+      } as CreateUserWithSystemFields);
 
       try {
         await this.emailService.sendEmail(
@@ -134,8 +139,6 @@ export class AuthService {
 
       return { message: 'Código de confirmação enviado para seu e-mail' };
     } catch (error) {
-      console.error('Erro no registro:', error);
-
       if (error instanceof BadRequestException) {
         throw error;
       }

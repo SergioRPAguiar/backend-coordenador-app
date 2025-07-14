@@ -13,4 +13,5 @@ export class CreateMeetingDto {
   @IsOptional()
   @IsString()
   userId?: string;
+
 }

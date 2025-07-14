@@ -60,7 +60,6 @@ export class NotificationService {
         emailText,
       );
     } catch (error) {
-      console.error('Erro ao enviar e-mail diário:', error);
     }
   }
 }

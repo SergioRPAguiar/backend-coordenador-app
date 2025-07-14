@@ -67,7 +67,6 @@ export class AuthController {
     const user = await this.userService.findOne(userId);
     if (!user) throw new NotFoundException('Usuário não encontrado');
 
-    // Verificar senha atual
     const isPasswordValid = await bcrypt.compare(
       body.currentPassword,
       user.password,
@@ -76,7 +75,6 @@ export class AuthController {
       throw new UnauthorizedException('Senha atual incorreta');
     }
 
-    // Validar nova senha
     if (body.newPassword.length < 6) {
       throw new BadRequestException('A senha deve ter pelo menos 6 caracteres');
     }
@@ -98,18 +96,14 @@ export class AuthController {
     const { email, code, newPassword } = body;
 
     const user = await this.userService.findByEmail(email);
-    console.log('Código recebido:', code);
-    console.log('Código salvo no usuário:', user.passwordResetCode);
     if (!user) {
       throw new NotFoundException('Usuário não encontrado');
     }
 
-    // Verifica se o código enviado corresponde ao código de reset de senha
     if (user.passwordResetCode !== code) {
       throw new BadRequestException('Código inválido');
     }
 
-    // Verifica se o código expirou
     if (
       !user.passwordResetExpiresAt ||
       new Date() > new Date(user.passwordResetExpiresAt)
@@ -117,7 +111,6 @@ export class AuthController {
       throw new BadRequestException('Código expirado');
     }
 
-    // Atualiza a senha e limpa os campos de código e expiração
     user.password = await bcrypt.hash(newPassword, 10);
     await this.userService.update(user.id, {
       password: user.password,
@@ -134,12 +127,13 @@ export class AuthController {
     if (!user) throw new NotFoundException('Usuário não encontrado');
 
     const code = Math.floor(100000 + Math.random() * 900000).toString();
-    const expiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 minutos
+    const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
 
-    await this.userService.update(user._id.toString(), {
-      passwordResetCode: code,
-      passwordResetExpiresAt: expiresAt,
-    });
+    await this.userService.updateConfirmationCode(
+      user._id.toString(),
+      code,
+      expiresAt,
+    );
 
     await this.emailService.sendResetPasswordCode(user.email, code);
 
@@ -157,12 +151,10 @@ export class AuthController {
     const user = await this.userService.findByEmail(body.email);
     if (!user) throw new NotFoundException('Usuário não encontrado');
 
-    if (user.passwordResetCode !== body.code) {
-      throw new BadRequestException('Código inválido');
-    }
-
-    if (new Date() > new Date(user.passwordResetExpiresAt)) {
-      throw new BadRequestException('Código expirado');
+    const codeValid = user.passwordResetCode === body.code;
+    const notExpired = new Date() < new Date(user.passwordResetExpiresAt);
+    if (!codeValid || !notExpired) {
+      throw new BadRequestException('Código inválido ou expirado');
     }
 
     return { valid: true };
@@ -179,27 +171,25 @@ export class AuthController {
     }
 
     const newCode = Math.floor(100000 + Math.random() * 900000).toString();
-    const expiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 minutos
+    const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
 
-    // ✅ Fluxo de confirmação de cadastro
     if (!body.mode || body.mode === 'cadastro') {
       if (user.isConfirmed) {
         throw new BadRequestException('Usuário já confirmado');
       }
 
-      await this.userService.update(user._id.toString(), {
-        confirmationCode: newCode,
-        confirmationCodeExpiresAt: expiresAt,
-      });
+      await this.userService.updateConfirmationCode(
+        user._id.toString(),
+        newCode,
+        expiresAt,
+      );
 
       await this.emailService.sendEmail(
         user.email,
         'Novo Código de Confirmação',
         `Seu novo código de confirmação é: ${newCode}`,
       );
-    }
-    // ✅ Fluxo de recuperação de senha
-    else if (body.mode === 'senha') {
+    } else if (body.mode === 'senha') {
       await this.userService.update(user._id.toString(), {
         passwordResetCode: newCode,
         passwordResetExpiresAt: expiresAt,

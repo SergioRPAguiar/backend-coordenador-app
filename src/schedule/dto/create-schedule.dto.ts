@@ -10,4 +10,7 @@ export class CreateScheduleDto {
   @IsBoolean()
   @IsOptional()
   available?: boolean;
+
+  @IsString()
+  professorId: string;
 }

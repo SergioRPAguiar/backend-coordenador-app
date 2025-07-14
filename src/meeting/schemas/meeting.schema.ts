@@ -15,14 +15,16 @@ export class Meeting {
   reason: string;
 
   @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'User' })
-  userId: string; 
-  
+  userId: string;
+
   @Prop({ default: false })
   canceled: boolean;
-  
+
   @Prop()
   cancelReason: string;
 
+  @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'User'})
+  professorId: string;
 }
 
 export const MeetingSchema = SchemaFactory.createForClass(Meeting);

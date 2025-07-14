@@ -7,12 +7,16 @@ import {
   Res,
   Param,
   NotFoundException,
+  UseGuards,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
 import { ConfigService } from '../config/config.service';
 import { FileUploadService } from './file-upload.service';
 import { Response } from 'express';
+import { JwtAuthGuard } from 'src/auth/guards/jwt.auth.guard';
+import { RolesGuard } from 'src/auth/guards/roles.guard';
+import { Roles } from 'src/auth/guards/roles.decorator';
 
 @Controller()
 export class FileUploadController {
@@ -21,6 +25,8 @@ export class FileUploadController {
     private readonly fileUploadService: FileUploadService,
   ) {}
 
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('isAdmin')
   @Post('upload/logo')
   @UseInterceptors(
     FileInterceptor('file', {
@@ -28,8 +34,8 @@ export class FileUploadController {
     }),
   )
   async uploadLogo(@UploadedFile() file: Express.Multer.File) {
-    const filename = 'logo.png'; 
-    await this.fileUploadService.uploadFile(file); 
+    const filename = 'logo.png';
+    await this.fileUploadService.uploadFile(file);
     const logoUrl = `${process.env.API_URL}/files/${filename}`;
 
     await this.configService.updateLogoUrl(logoUrl);

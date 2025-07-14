@@ -25,7 +25,7 @@ export class User {
   isConfirmed: boolean;
 
   @Prop()
-  confirmationCode?: string; // para cadastro
+  confirmationCode?: string; 
   @Prop()
   confirmationCodeExpiresAt?: Date;
 

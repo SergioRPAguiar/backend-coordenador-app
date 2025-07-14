@@ -30,6 +30,7 @@
     "@nestjs/platform-express": "^11.0.9",
     "@nestjs/schedule": "^5.0.1",
     "@nestjs/serve-static": "^5.0.2",
+    "@nestjs/throttler": "^6.4.0",
     "back-agenda-cotad": "file:",
     "bcrypt": "^5.1.1",
     "bcryptjs": "^3.0.0",

@@ -55,11 +55,10 @@ export class ScheduleService {
     date: string,
     timeSlot: string,
     available: boolean,
+    professorId: string,
   ): Promise<Schedule> {
     try {
-      const formattedDate = dayjs(date).format('YYYY-MM-DD'); // normaliza
-
-      // Se for liberar, verificar se não tem reunião já marcada
+      const formattedDate = dayjs(date).format('YYYY-MM-DD');
       if (available) {
         const existingMeeting = await this.meetingModel.findOne({
           date: formattedDate,
@@ -75,10 +74,10 @@ export class ScheduleService {
       }
 
       return await this.scheduleModel.findOneAndUpdate(
-        { date: formattedDate, timeSlot },
+        { date: formattedDate, timeSlot, professorId },
         {
           $set: { available },
-          $setOnInsert: { date: formattedDate, timeSlot },
+          $setOnInsert: { date: formattedDate, timeSlot, professorId },
         },
         {
           new: true,
@@ -87,9 +86,16 @@ export class ScheduleService {
         },
       );
     } catch (error) {
-      console.error('Erro no markAvailability:', error);
       throw new ConflictException(error.message || 'Erro ao atualizar horário');
     }
+  }
+
+  async findScheduleByDateAndTime(
+    date: string,
+    timeSlot: string,
+  ): Promise<Schedule | null> {
+    const formattedDate = dayjs(date).format('YYYY-MM-DD');
+    return this.scheduleModel.findOne({ date: formattedDate, timeSlot }).exec();
   }
 
   async cleanAllSchedules(): Promise<DeleteResult> {

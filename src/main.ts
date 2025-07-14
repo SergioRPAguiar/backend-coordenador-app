@@ -12,7 +12,7 @@ async function bootstrap() {
   //});
 
   app.enableCors({
-    origin: true, // Permite qualquer origem
+    origin: true, 
     credentials: true
   });
 

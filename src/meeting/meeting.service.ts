@@ -13,6 +13,7 @@ import { EmailService } from '../email/email.service';
 import { UserService } from '../user/user.service';
 import * as dayjs from 'dayjs';
 import * as customParseFormat from 'dayjs/plugin/customParseFormat';
+import { User } from 'src/user/schemas/user.schema';
 dayjs.extend(customParseFormat);
 interface MeetingWithDateObject extends Meeting {
   dateObject?: Date;
@@ -28,13 +29,7 @@ export class MeetingService {
   ) {}
 
   async create(createMeetingDto: CreateMeetingDto): Promise<Meeting> {
-    // 🔧 Normaliza a data para 'YYYY-MM-DD'
     const formattedDate = dayjs(createMeetingDto.date).format('YYYY-MM-DD');
-
-    const isAvailable = await this.scheduleService.isTimeSlotAvailable(
-      formattedDate,
-      createMeetingDto.timeSlot,
-    );
 
     const diaSemana = new Date(formattedDate).getDay();
     if (diaSemana === 6) {
@@ -42,6 +37,11 @@ export class MeetingService {
         'Reuniões não podem ser marcadas no Domingo',
       );
     }
+
+    const isAvailable = await this.scheduleService.isTimeSlotAvailable(
+      formattedDate,
+      createMeetingDto.timeSlot,
+    );
 
     if (!isAvailable) {
       throw new BadRequestException('Horário indisponível');
@@ -56,16 +56,30 @@ export class MeetingService {
       throw new BadRequestException('Faltam informações obrigatórias');
     }
 
+    const schedule = await this.scheduleService.findScheduleByDateAndTime(
+      formattedDate,
+      createMeetingDto.timeSlot,
+    );
+
+    if (!schedule || !schedule.professorId) {
+      throw new BadRequestException(
+        'Não foi possível determinar o professor responsável pelo horário',
+      );
+    }
+
     const createdMeeting = new this.meetingModel({
       ...createMeetingDto,
       date: formattedDate,
+      professorId: schedule.professorId.toString(),
     });
+
     await createdMeeting.save();
 
     await this.scheduleService.markAvailability(
       formattedDate,
       createMeetingDto.timeSlot,
       false,
+      schedule.professorId.toString(),
     );
 
     return createdMeeting;
@@ -80,12 +94,6 @@ export class MeetingService {
       })
       .sort({ date: 1, timeSlot: 1 })
       .exec();
-
-    console.log('Filtrando reuniões futuras para o usuário:', id);
-    console.log(
-      'Reuniões encontradas:',
-      allMeetings.map((m) => m.date + ' ' + m.timeSlot),
-    );
 
     const nextMeeting = allMeetings.find((meeting) => {
       const startHour = meeting.timeSlot.split(' - ')[0];
@@ -115,13 +123,16 @@ export class MeetingService {
       .exec();
   }
 
-  async findNextMeetingForProfessor(): Promise<MeetingWithDateObject | null> {
+  async findNextMeetingForProfessor(
+    professorId: string,
+  ): Promise<MeetingWithDateObject | null> {
     const now = new Date();
     const today = now.toISOString().split('T')[0];
     const currentTime = now.toTimeString().slice(0, 5);
 
     const meeting = await this.meetingModel
       .findOne({
+        professorId,
         canceled: false,
         $or: [
           { date: { $gt: today } },
@@ -185,6 +196,7 @@ export class MeetingService {
         meeting.date,
         meeting.timeSlot,
         true,
+        meeting.professorId,
       );
     }
 
@@ -198,24 +210,42 @@ export class MeetingService {
     };
   }
 
-  async notifyUsers(meeting: Meeting): Promise<void> {
-    const recipientId = meeting.userId;
-    const user = await this.userService.findOne(recipientId);
-    if (!user) {
-      console.error('Usuário não encontrado para notificação.');
+  async notifyUsers(
+    meeting: Meeting,
+    cancelledByUserId: string,
+  ): Promise<void> {
+    const cancellingUser = await this.userService.findOne(cancelledByUserId);
+    if (!cancellingUser) {
       return;
     }
 
-    const email = user.email;
-    const subject = 'Reunião Cancelada';
+    let recipient: User | null = null;
+
+    if (meeting.userId.toString() === cancelledByUserId) {
+      recipient = await this.userService.findOne(meeting.professorId);
+    } else {
+      recipient = await this.userService.findOne(meeting.userId);
+    }
+
+    if (!recipient) {
+      return;
+    }
+
     const formattedDate = dayjs(meeting.date).format('DD/MM/YYYY');
-    const text = `Olá! A reunião agendada no Coordenador.app para o dia ${formattedDate} às ${meeting.timeSlot} foi cancelada.\n\nMotivo do cancelamento: ${meeting.cancelReason}`;
+    const subject = 'Reunião Cancelada';
+
+    const text = `Olá ${recipient.name},
+
+A reunião agendada no Coordenador.app para o dia ${formattedDate} às ${meeting.timeSlot} foi cancelada por **${cancellingUser.name}**.
+
+📝 Motivo: ${meeting.cancelReason}
+
+Atenciosamente,
+Equipe Coordenador.app`;
 
     try {
-      await this.emailService.sendEmail(email, subject, text);
-    } catch (error) {
-      console.error('Erro ao enviar e-mail:', error);
-    }
+      await this.emailService.sendEmail(recipient.email, subject, text);
+    } catch (error) {}
   }
 
   async findAll(): Promise<Meeting[]> {

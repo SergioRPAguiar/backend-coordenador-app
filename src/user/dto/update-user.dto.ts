@@ -15,7 +15,6 @@ export class UpdateUserDto extends PartialType(CreateUserDto) {
   @IsOptional()
   confirmationCodeExpiresAt?: Date;
 
-  // ✅ Adicione estes campos abaixo
   @IsString()
   @IsOptional()
   passwordResetCode?: string;
@@ -27,6 +26,10 @@ export class UpdateUserDto extends PartialType(CreateUserDto) {
   @IsString()
   @IsOptional()
   contato?: string;
+
+  @IsBoolean()
+  @IsOptional()
+  professor?: boolean;
 
   @IsBoolean()
   @IsOptional()
