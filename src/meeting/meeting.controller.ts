@@ -65,8 +65,9 @@ export class MeetingController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('professor', 'isAdmin')
   @Get('allFutureForProfessor')
-  async findAllFutureMeetingsForProfessor(): Promise<Meeting[]> {
-    return this.meetingService.findAllFutureMeetingsForProfessor();
+  async findAllFutureMeetingsForProfessor(@Request() req): Promise<Meeting[]> {
+    const professorId = req.user.sub;
+    return this.meetingService.findAllFutureMeetingsForProfessor(professorId);
   }
 
   @UseGuards(JwtAuthGuard)

@@ -58,26 +58,30 @@ export class ScheduleService {
     professorId: string,
   ): Promise<Schedule> {
     try {
-      const formattedDate = dayjs(date).format('YYYY-MM-DD');
+      const formattedDateForDB = dayjs(date).format('YYYY-MM-DD');
+
       if (available) {
         const existingMeeting = await this.meetingModel.findOne({
-          date: formattedDate,
+          date: formattedDateForDB,
           timeSlot,
           canceled: false,
         });
 
         if (existingMeeting) {
+          const formattedDateForUser = dayjs(date)
+            .locale('pt-br')
+            .format('DD/MM/YYYY');
           throw new ConflictException(
-            `Horário já reservado para ${formattedDate} às ${timeSlot}`,
+            `Horário já reservado para ${formattedDateForUser} às ${timeSlot}`,
           );
         }
       }
 
       return await this.scheduleModel.findOneAndUpdate(
-        { date: formattedDate, timeSlot, professorId },
+        { date: formattedDateForDB, timeSlot, professorId },
         {
           $set: { available },
-          $setOnInsert: { date: formattedDate, timeSlot, professorId },
+          $setOnInsert: { date: formattedDateForDB, timeSlot, professorId },
         },
         {
           new: true,

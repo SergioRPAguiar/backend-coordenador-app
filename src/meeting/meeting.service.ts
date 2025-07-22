@@ -154,13 +154,17 @@ export class MeetingService {
     return { ...meetingObject, dateObject };
   }
 
-  async findAllFutureMeetingsForProfessor(): Promise<Meeting[]> {
+  async findAllFutureMeetingsForProfessor(
+    professorId: string,
+  ): Promise<Meeting[]> {
     const now = new Date();
     const today = now.toISOString().split('T')[0];
     const currentTime = now.toTimeString().slice(0, 5);
 
     return this.meetingModel
       .find({
+        professorId,
+        canceled: false,
         $or: [
           { date: { $gt: today } },
           { date: today, timeSlot: { $gt: currentTime } },
