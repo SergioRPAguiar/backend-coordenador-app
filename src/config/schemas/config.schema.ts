@@ -5,7 +5,7 @@ export type ConfigDocument = Config & Document;
 
 @Schema()
 export class Config {
-  @Prop({ required: true, default: 'Agenda Cotad' })
+  @Prop({ required: true, default: 'Coordenador.App' })
   appName: string;
 
   @Prop({ required: true, default: 'https://seuservidor.com/logo.png' })

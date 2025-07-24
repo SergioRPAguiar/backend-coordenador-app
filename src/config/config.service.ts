@@ -14,7 +14,7 @@ export class ConfigService {
 
     if (!config) {
       config = await this.configModel.create({
-        appName: 'Coordenador.app',
+        appName: 'Coordenador.App',
         logoUrl: `${process.env.API_URL}/files/logo.png`,
       });
     }
@@ -25,7 +25,7 @@ export class ConfigService {
     let config = await this.configModel.findOne();
     if (!config) {
       config = await this.configModel.create({
-        appName: 'Agenda',
+        appName: 'Coordenador App',
         logoUrl,
       });
     } else {

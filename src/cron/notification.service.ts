@@ -6,6 +6,7 @@ import * as timezone from 'dayjs/plugin/timezone';
 import { MeetingService } from '../meeting/meeting.service';
 import { UserService } from '../user/user.service';
 import { EmailService } from '../email/email.service';
+import { User } from 'src/user/schemas/user.schema';
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -42,8 +43,8 @@ export class NotificationService {
     emailText += 'Horário | Aluno | Motivo\n';
     emailText += '-----------------------------\n';
     for (const meeting of sortedMeetings) {
-      const user = meeting.userId as any;
-      emailText += `${meeting.timeSlot} | ${user?.name || 'N/A'} | ${meeting.reason}\n`;
+      const user = meeting.userId as User;
+      emailText += `${meeting.timeSlot} | ${user?.name} | ${meeting.reason}\n`;
     }
 
     await this.emailService.sendEmail(

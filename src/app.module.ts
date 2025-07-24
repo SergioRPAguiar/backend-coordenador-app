@@ -6,7 +6,6 @@ import { MeetingService } from './meeting/meeting.service';
 import { Meeting, MeetingSchema } from './meeting/schemas/meeting.schema';
 import { UserController } from './user/user.controller';
 import { UserService } from './user/user.service';
-import { NotificationService } from './cron/notification.service';
 import { User, UserSchema } from './user/schemas/user.schema';
 import { AuthModule } from './auth/auth.module';
 import { UserModule } from './user/user.module';
@@ -38,7 +37,6 @@ import { NotificationModule } from './cron/notification.module';
   providers: [
     MeetingService,
     UserService,
-    NotificationService
   ],
 })
 export class AppModule {}

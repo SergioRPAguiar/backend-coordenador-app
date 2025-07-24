@@ -281,12 +281,13 @@ Equipe Coordenador.app`;
     return updatedMeeting;
   }
 
-  async findDailyMeetings(date: string): Promise<Meeting[]> {
+  async findDailyMeetings(date: string): Promise<(Meeting & { userId: User | string })[]> {
     return this.meetingModel
       .find({
         date,
         canceled: false,
       })
+      .populate('userId', 'name email contato')
       .exec();
   }
 
