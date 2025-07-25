@@ -117,6 +117,5 @@ src/
 4. Push para sua branch: `git push origin feat/nova-funcionalidade`
 5. Abra um Pull Request
 
-> Para detalhes completos das rotas e exemplos de request/responses, consulte o arquivo `API_Postman_Guide.md`.\
-> Se faltar alguma informação (ex.: DTOs, testes), me avise para complementar!
+> Para detalhes completos das rotas e exemplos de request/responses, consulte o arquivo `api_postman_guide.md`.\
 
