@@ -87,7 +87,7 @@ src/
 ## 📚 Documentação da API
 
 - **Postman Collection**: importe o guia completo de rotas para testar todos os endpoints.
-- **Arquivo:** [`API_Postman_Guide.md`](./API_Postman_Guide.md) (ou [coleção JSON do Postman])
+- **Arquivo:** [`api_postman_guide.md`](./API_Postman_Guide.md) (ou [coleção JSON do Postman])
 
 ## 🛡️ Rotas Principais
 
