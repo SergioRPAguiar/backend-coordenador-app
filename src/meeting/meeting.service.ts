@@ -123,6 +123,24 @@ export class MeetingService {
       .exec();
   }
 
+  async findAllFutureMeetingsForStudent(userId: string): Promise<Meeting[]> {
+    const now = new Date();
+    const today = now.toISOString().split('T')[0];
+    const currentTime = now.toTimeString().slice(0, 5);
+
+    return this.meetingModel
+      .find({
+        userId,
+        canceled: false,
+        $or: [
+          { date: { $gt: today } },
+          { date: today, timeSlot: { $gt: currentTime } },
+        ],
+      })
+      .sort({ date: 1, timeSlot: 1 })
+      .exec();
+  }
+
   async findNextMeetingForProfessor(
     professorId: string,
   ): Promise<MeetingWithDateObject | null> {
@@ -281,7 +299,9 @@ Equipe Coordenador.app`;
     return updatedMeeting;
   }
 
-  async findDailyMeetings(date: string): Promise<(Meeting & { userId: User | string })[]> {
+  async findDailyMeetings(
+    date: string,
+  ): Promise<(Meeting & { userId: User | string })[]> {
     return this.meetingModel
       .find({
         date,

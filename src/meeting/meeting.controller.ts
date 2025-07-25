@@ -87,6 +87,21 @@ export class MeetingController {
     return this.meetingService.findAllMeetingsForStudent(userId);
   }
 
+@UseGuards(JwtAuthGuard)
+@Get('allFutureForStudent')
+async findAllFutureMeetingsForStudent(
+  @Query('userId') userId: string,
+  @Request() req,
+): Promise<Meeting[]> {
+  const requester = req.user;
+
+  if (requester.sub !== userId && !requester.isAdmin) {
+    throw new ForbiddenException('Você não tem permissão para acessar essas reuniões');
+  }
+
+  return this.meetingService.findAllFutureMeetingsForStudent(userId);
+}
+
   @UseGuards(JwtAuthGuard)
   @Patch(':id/cancel')
   async cancelMeeting(
