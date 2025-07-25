@@ -105,9 +105,6 @@ src/
 | Config   | `/config/update-name`         | POST   | JWT/Admin |
 | ...      | (veja `API_Postman_Guide.md`) |        |           |
 
-## 🧪 Testes
-
-*(Adicionar instruções de testes automatizados, se houver.)*
 
 ## 🤝 Contribuição
 
