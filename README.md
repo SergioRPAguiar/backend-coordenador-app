@@ -1,85 +1,122 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# Backend Coordenador.App
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+> API RESTful para o gerenciamento de usuários, autenticação JWT, agendamento de reuniões e upload de arquivos, desenvolvida com NestJS.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://coveralls.io/github/nestjs/nest?branch=master" target="_blank"><img src="https://coveralls.io/repos/github/nestjs/nest/badge.svg?branch=master#9" alt="Coverage" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## 🚀 Visão Geral
 
-## Description
+Este repositório contém o backend do **Coordenador.App**, uma aplicação para:
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+- Registro, login e confirmação de usuários (alunos e professores) via código de e-mail
+- Autenticação baseada em JWT e controle de acesso por roles (admin, professor, aluno)
+- CRUD de usuários, reuniões e agendas (schedules)
+- Upload/download de arquivos (logo e outros)
+- Health check e disparo de e-mail de teste via cron job
 
-## Project setup
+## 🛠️ Tecnologias
 
-```bash
-$ npm install
+- **Node.js** + **NestJS** (TypeScript)
+- **Express** (integrado ao Nest)
+- **MongoDB** (via Mongoose)
+- **JWT** para autenticação
+- **Bcrypt** para hashing de senhas
+- **Multer** para upload de arquivos
+- **SMTP / EmailService** para envio de e-mails
+
+## 📁 Estrutura do Projeto
+
+```
+src/
+├─ app.controller.ts         # Root Controller
+├─ auth/                    # Autenticação e usuários
+│  ├─ auth.controller.ts
+│  └─ auth.service.ts
+├─ user/                    # CRUD de usuários
+│  ├─ user.controller.ts
+│  └─ user.service.ts
+├─ meeting/                 # Reuniões
+├─ schedule/                # Agendas (timeslots)
+├─ file-upload/             # Upload/download de arquivos
+├─ config/                  # Configurações da aplicação
+├─ email/                   # Serviço de envio de e-mail
+├─ cron/                    # Tarefas agendadas
+├─ health/                  # Health check
+└─ main.ts                  # Ponto de entrada
 ```
 
-## Compile and run the project
+## ⚙️ Instalação & Setup
 
-```bash
-# development
-$ npm run start
+### Pré-requisitos
 
-# watch mode
-$ npm run start:dev
+- **Node.js** v18+
+- **npm** ou **yarn**
+- **MongoDB** (local ou Atlas)
 
-# production mode
-$ npm run start:prod
-```
+### Passos
 
-## Run tests
+1. Clone o repositório:
+   ```bash
+   git clone https://github.com/SergioRPAguiar/backend-coordenador-app.git
+   cd backend-coordenador-app
+   ```
+2. Instale dependências:
+   ```bash
+   npm install
+   # ou
+   yarn install
+   ```
+3. Crie um arquivo `.env` na raiz com as variáveis:
+   ```dotenv
+   PORT=3000
+   MONGODB_URI=mongodb://localhost:27017/coordenador-app
+   JWT_SECRET=seuSegredoJWT
+   JWT_EXPIRATION=3600s
+   API_URL=http://localhost:3000
+   SMTP_HOST=smtp.exemplo.com
+   SMTP_PORT=587
+   SMTP_USER=usuario@example.com
+   SMTP_PASS=senha
+   ```
+4. Inicie o servidor:
+   ```bash
+   npm run start:dev
+   # ou
+   yarn start:dev
+   ```
+5. Acesse em `http://localhost:3000/health` para verificar o health check.
 
-```bash
-# unit tests
-$ npm run test
+## 📚 Documentação da API
 
-# e2e tests
-$ npm run test:e2e
+- **Postman Collection**: importe o guia completo de rotas para testar todos os endpoints.
+- **Arquivo:** [`API_Postman_Guide.md`](./API_Postman_Guide.md) (ou [coleção JSON do Postman])
 
-# test coverage
-$ npm run test:cov
-```
+## 🛡️ Rotas Principais
 
-## Resources
+| Recurso  | Rota                          | Método | Auth      |
+| -------- | ----------------------------- | ------ | --------- |
+| Auth     | `/auth/register`              | POST   | Não       |
+| Auth     | `/auth/login`                 | POST   | Não       |
+| Auth     | `/auth/me`                    | GET    | JWT       |
+| User     | `/user`                       | POST   | Não       |
+| User     | `/user/:id`                   | GET    | JWT       |
+| Meeting  | `/meeting`                    | POST   | JWT       |
+| Meeting  | `/meeting/:id`                | GET    | JWT       |
+| Schedule | `/schedule/available/:date`   | GET    | Não       |
+| File     | `/upload/logo`                | POST   | JWT/Admin |
+| Config   | `/config/update-name`         | POST   | JWT/Admin |
+| ...      | (veja `API_Postman_Guide.md`) |        |           |
 
-Check out a few resources that may come in handy when working with NestJS:
+## 🧪 Testes
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+*(Adicionar instruções de testes automatizados, se houver.)*
 
-## Support
+## 🤝 Contribuição
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+1. Fork este repositório
+2. Crie uma branch: `git checkout -b feat/nova-funcionalidade`
+3. Commit suas alterações: `git commit -m 'feat: descrição'`
+4. Push para sua branch: `git push origin feat/nova-funcionalidade`
+5. Abra um Pull Request
 
-## Stay in touch
+> Para detalhes completos das rotas e exemplos de request/responses, consulte o arquivo `API_Postman_Guide.md`.\
+> Se faltar alguma informação (ex.: DTOs, testes), me avise para complementar!
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
